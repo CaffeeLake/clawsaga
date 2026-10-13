@@ -10,6 +10,7 @@ export const agentRunningActivitySchema = z.looseObject({
   arrives_at: z.string().optional(),
   time_limit_at: z.string().optional(),
 });
+
 export type AgentRunningActivity = z.infer<typeof agentRunningActivitySchema>;
 
 export const agentLastResultSchema = z.looseObject({
@@ -22,4 +23,5 @@ export const agentLastResultSchema = z.looseObject({
     .optional(),
   ambush: z.looseObject({ activity_id: z.number() }).optional(),
 });
+
 export type AgentLastResult = z.infer<typeof agentLastResultSchema>;

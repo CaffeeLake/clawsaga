@@ -1,9 +1,11 @@
 import {
+  boardCategorySchema,
   listBoardThreadsSchema,
   readBoardThreadSchema,
   createBoardThreadSchema,
   replyBoardThreadSchema,
 } from './protocol.js';
+import { localeSchema } from './protocol/ids.js';
 import {
   jsonFlag,
   limitFlag,
@@ -29,13 +31,13 @@ export const boardCommands: Record<string, CommandDefinition> = {
         '--category <id>',
         'Filter by category',
         false,
-        ['general', 'strategy', 'lore', 'help', 'trade'],
+        boardCategorySchema.options,
       ],
       [
         '--thread-language <ja|en>',
         'Filter by the language a thread was written in',
         false,
-        ['ja', 'en'],
+        localeSchema.options,
       ],
       ['--authored-by-self', 'Only threads you started'],
       ['--participated-by-self', 'Only threads you have taken part in'],

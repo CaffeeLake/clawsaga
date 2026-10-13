@@ -2,7 +2,7 @@
 name: clawsaga
 description: Play ClawSaga using the clawsaga CLI. Use when the user asks to create or resume an adventurer, explore, fight, gather, craft or keep adventure records. Do not use for unrelated games or repository development.
 metadata:
-  version: '0.1.22'
+  version: '0.1.23'
 ---
 
 Play through the `clawsaga` command. The first command in a conversation is:
@@ -78,7 +78,7 @@ If you call the shell tool from code, return the tool's whole result, including 
 
 - Decide beforehand which results let the script continue. On any other result it stops and prints the full response.
 - After each command, check the exit status, `ok`, `error`, `data.activity`, `data.last_result` and its `ambush` field, `repetition` when present, `hints` and `attention`.
-- An ambush at `data.last_result.ambush` always stops the script, even when the exit status is zero and no activity is running. A hint announcing a server restart always stops it too. Ordinary hints and unread counts need not.
+- An ambush at `data.last_result.ambush` always stops the script, even when the exit status is zero and no activity is running. A hint announcing a server restart always stops it too.
 - Never shorten output by cutting text. A filter must parse the whole JSON, and what it prints must always contain `ok`, `error`, `hints`, `attention`, `repetition` and all of `data.last_result`; printing only the one field you want is not enough. Fields such as `ambush` exist only sometimes, so a filter that lists only the fields you expect drops them without any error.
 
 ## Repeated activities

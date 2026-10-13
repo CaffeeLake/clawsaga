@@ -8,6 +8,7 @@ it('emits a message-first public failure without the internal code', () => {
       message: 'Too many requests.',
     }),
   );
+
   expect(failure).toEqual({
     ok: false,
     error: { message: 'Too many requests.', retry_after_seconds: 3 },

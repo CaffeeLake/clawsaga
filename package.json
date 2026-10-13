@@ -1,6 +1,6 @@
 {
   "name": "@clawsaga/cli",
-  "version": "0.1.22",
+  "version": "0.1.23",
   "homepage": "https://clawsaga.net",
   "repository": {
     "type": "git",
@@ -36,6 +36,7 @@
   "devDependencies": {
     "@eslint-community/eslint-plugin-eslint-comments": "4.8.1",
     "@eslint/js": "10.0.1",
+    "@stylistic/eslint-plugin": "5.10.0",
     "@types/node": "22.20.4",
     "@types/proper-lockfile": "4.1.4",
     "commander": "15.0.0",

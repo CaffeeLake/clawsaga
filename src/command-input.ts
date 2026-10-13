@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { z } from 'zod';
-import { CliError } from './errors.js';
+import { CliError, invalidArguments } from './errors.js';
 import type { CommandDefinition } from './command-definition.js';
 
 export const optionsSchema = z.object({
@@ -35,6 +35,7 @@ export const optionsSchema = z.object({
   drop: z.string().optional(),
   offer: z.string().optional(),
   fixedQuest: z.string().optional(),
+  goal: z.string().optional(),
   quest: z.string().optional(),
   journal: z.string().optional(),
   article: z.string().optional(),
@@ -65,7 +66,9 @@ export const optionsSchema = z.object({
   order: z.string().optional(),
   listing: z.string().optional(),
   section: z.string().optional(),
+  tier: z.string().optional(),
 });
+
 export type Values = z.infer<typeof optionsSchema>;
 
 function isJsonObject(value: unknown): value is Record<string, unknown> {
@@ -80,6 +83,7 @@ async function readStdin() {
     // 標準入力を無制限に読み込まない。本文の上限はサーバーが検査する。
     if (text.length > 128 * 1024) throw new CliError('INVALID_INPUT_FILE');
   }
+
   return text;
 }
 
@@ -87,6 +91,7 @@ async function readJsonFile(file: string): Promise<unknown> {
   try {
     const text =
       file === '-' ? await readStdin() : await readFile(file, 'utf8');
+
     return JSON.parse(text);
   } catch {
     throw new CliError('INVALID_INPUT_FILE');
@@ -99,7 +104,9 @@ export function optionKey(flags: string) {
     .split(',')
     .map((part) => part.trim())
     .find((part) => part.startsWith('--'));
+
   const name = (long ?? flags).replace(/^--?/, '').split(' ')[0] ?? flags;
+
   return name.replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase());
 }
 
@@ -113,11 +120,13 @@ export function integerFlag(option: string, value: string | boolean) {
     typeof value !== 'string' ||
     !/^\d+$/.test(value) ||
     !Number.isSafeInteger(number)
-  )
-    throw new CliError('INVALID_ARGUMENTS', {
-      fields: [option],
-      message: `--${option.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)} must be a non-negative integer.`,
-    });
+  ) {
+    throw invalidArguments(
+      [option],
+      `--${option.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)} must be a non-negative integer.`,
+    );
+  }
+
   return number;
 }
 
@@ -138,7 +147,9 @@ async function bodyFileInput(
 ) {
   const fileBody = await readJsonFile(file);
   if (!isJsonObject(fileBody)) throw new CliError('INVALID_INPUT_FILE');
+
   const body = definition.bodyInput?.(values, fileBody) ?? fileBody;
+
   return {
     ...(definition.autoRequestId ? { request_id: values.request } : {}),
     ...body,
@@ -152,6 +163,7 @@ function flagInput(definition: CommandDefinition, values: Values) {
   const locale = values.contentLanguage ?? definition.defaultLocale;
   if (locale) input.locale = locale;
   if (values.character) input.character_id = values.character;
+
   const provided: Record<string, string | boolean | undefined> = values;
   for (const [option, field] of Object.entries(definition.input ?? {})) {
     const value = provided[option];
@@ -161,6 +173,8 @@ function flagInput(definition: CommandDefinition, values: Values) {
     else if (conversion === 'list') input[key] = String(value).split(',');
     else input[key] = value;
   }
+
   definition.buildInput?.(values, input);
+
   return input;
 }

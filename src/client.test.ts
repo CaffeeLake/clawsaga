@@ -15,6 +15,7 @@ import { z } from 'zod';
 
 vi.mock('node:fs/promises', async (importOriginal) => {
   const fs = await importOriginal<typeof import('node:fs/promises')>();
+
   return { ...fs, chmod: vi.fn(fs.chmod) };
 });
 
@@ -22,8 +23,9 @@ const directories: string[] = [];
 const origin = 'https://clawsaga.example';
 afterEach(async () => {
   vi.unstubAllGlobals();
-  for (const directory of directories.splice(0))
+  for (const directory of directories.splice(0)) {
     await rm(directory, { recursive: true, force: true });
+  }
 });
 async function fixture() {
   const directory = await mkdtemp(join(tmpdir(), 'clawsaga-cli-'));
@@ -38,6 +40,7 @@ async function fixture() {
       expires_at: 0,
     };
   });
+
   return { store, path };
 }
 
@@ -50,8 +53,10 @@ it('chooses the home directory and rejects unsafe servers', () => {
     'https://user:secret@example.com',
     'https://example.com/path',
     'https://example.com/?token=secret',
-  ])
+  ]) {
     expect(() => serverOrigin(value)).toThrow('INVALID_SERVER');
+  }
+
   expect(serverOrigin('http://localhost:3000')).toBe('http://localhost:3000');
 });
 
@@ -68,17 +73,20 @@ it('keeps storage and locks inside the home directory and excludes them from Git
       scope: 'game:read',
     };
   });
+
   expect(await readFile(join(home, '.clawsaga', '.gitignore'), 'utf8')).toBe(
     '*\n',
   );
   expect(
     await new CredentialStore(path).update((entries) => {
       const entry = entries[origin];
+
       return entry && !isPendingAuthorization(entry)
         ? entry.access_token
         : undefined;
     }),
   ).toBe('access');
+
   const other = new CredentialStore(credentialPath(join(home, 'other')));
   const request = vi.fn<typeof fetch>();
   await expect(
@@ -97,16 +105,20 @@ it('keeps credentials private and serializes concurrent refreshes without stale 
       scope: 'game:read game:play offline_access',
     }),
   );
+
   const first = new GameClient(origin, store, request);
   const second = new GameClient(origin, new CredentialStore(path), request);
+
   expect(
     await Promise.all([first.accessToken(), second.accessToken()]),
   ).toEqual(['new-access', 'new-access']);
   expect(request).toHaveBeenCalledTimes(1);
+
   if (process.platform !== 'win32') {
     expect((await stat(path)).mode & 0o777).toBe(0o600);
     expect((await stat(join(path, '..'))).mode & 0o777).toBe(0o700);
   }
+
   expect(JSON.parse(await readFile(path, 'utf8'))).toMatchObject({
     [origin]: { refresh_token: 'new-refresh' },
   });
@@ -123,7 +135,9 @@ it('serves a valid token while another process holds the lock', async () => {
     realpath: false,
     lockfilePath: join(directory, 'credentials.lock'),
   });
+
   const request = vi.fn<typeof fetch>();
+
   try {
     expect(
       await new GameClient(
@@ -135,6 +149,7 @@ it('serves a valid token while another process holds the lock', async () => {
   } finally {
     await release();
   }
+
   expect(request).not.toHaveBeenCalled();
 });
 
@@ -150,12 +165,15 @@ it('saves, updates and reads credentials even when permission changes fail', asy
       const { store, path } = await fixture();
       await store.update((entries) => {
         const entry = entries[origin]!;
-        if (!isPendingAuthorization(entry))
+        if (!isPendingAuthorization(entry)) {
           entry.access_token = 'updated-access';
+        }
       });
+
       expect(
         await store.update((entries) => {
           const entry = entries[origin];
+
           return entry && !isPendingAuthorization(entry)
             ? entry.access_token
             : undefined;
@@ -172,6 +190,7 @@ it('waits through repeated lock retries for a slow concurrent refresh', async ()
   const { store, path } = await fixture();
   const request = vi.fn<typeof fetch>().mockImplementation(async () => {
     await new Promise((resolve) => setTimeout(resolve, 1200));
+
     return Response.json({
       access_token: 'new-access',
       refresh_token: 'new-refresh',
@@ -179,8 +198,10 @@ it('waits through repeated lock retries for a slow concurrent refresh', async ()
       scope: 'game:read game:play offline_access',
     });
   });
+
   const first = new GameClient(origin, store, request);
   const second = new GameClient(origin, new CredentialStore(path), request);
+
   expect(
     await Promise.all([first.accessToken(), second.accessToken()]),
   ).toEqual(['new-access', 'new-access']);
@@ -192,6 +213,7 @@ it('does not replay a game mutation after a 401 or network failure', async () =>
   await store.update((entries) => {
     entries[origin]!.expires_at = Date.now() + 3600_000;
   });
+
   for (const response of [
     new Response(null, { status: 401 }),
     new Error('fixture network'),
@@ -200,6 +222,7 @@ it('does not replay a game mutation after a 401 or network failure', async () =>
     if (response instanceof Error) request.mockRejectedValue(response);
     else request.mockResolvedValue(response);
     const client = new GameClient(origin, store, request);
+
     await expect(client.invoke('character/travel', {})).rejects.toThrow(
       response instanceof Error ? 'NETWORK_ERROR' : 'AUTH_REQUIRED',
     );
@@ -236,12 +259,15 @@ it('reports 5xx and unreadable responses without exposing response contents', as
         'The server returned a response that was not valid JSON. The action may still have been applied; check its outcome before another change.',
     },
   ];
+
   for (const { response, code, message } of cases) {
     const request = vi.fn<typeof fetch>().mockResolvedValue(response);
     const client = new GameClient(origin, store, request);
+
     const error = await client
       .invoke('character/activity', {})
       .catch((error: unknown) => error);
+
     expect(error).toMatchObject({ code });
     if (message) expect(error).toMatchObject({ detail: { message } });
     expect(JSON.stringify(error)).not.toContain('private upstream details');
@@ -265,10 +291,13 @@ it('reports UPDATE_REQUIRED only when the server schema is newer', async () => {
         data: {},
       }),
     );
+
     const client = new GameClient(origin, store, request);
+
     const error = await client
       .invoke('character/activity', {})
       .catch((error: unknown) => error);
+
     if (!(error instanceof CliError)) throw new Error('Expected a CliError');
     expect(error.code).toBe('UPDATE_REQUIRED');
     expect(error.detail).toMatchObject({
@@ -304,11 +333,13 @@ it('returns unknown content values and unknown fields from the server unchanged'
       },
     },
   };
+
   const client = new GameClient(
     origin,
     store,
     vi.fn<typeof fetch>().mockResolvedValue(Response.json(body)),
   );
+
   expect(await client.invoke('character/activity', {})).toEqual(body);
 });
 
@@ -326,14 +357,17 @@ it('marks a failure before the start as not sent, not as an unknown outcome', as
     () =>
       vi.fn<typeof fetch>().mockRejectedValue(new TypeError('socket hang up')),
   ];
+
   for (const buildRequest of requests) {
     const request = buildRequest();
     const client = new GameClient(origin, store, request);
     const error = await client
       .invoke('character/travel', { to: 'mossway' })
       .catch((error: unknown) => error);
+
     if (!(error instanceof CliError)) throw new Error('Expected a CliError');
     expect(error.detail.outcome).toBe('not_sent');
+
     // Only the token refresh was attempted; the game start was never sent.
     expect(request).toHaveBeenCalledTimes(1);
     expect(request.mock.calls[0]?.[0] as string).toBe(
@@ -361,7 +395,9 @@ it('shows the server message for 401 and 429 responses', async () => {
         { status: 429, headers: { 'Retry-After': '3' } },
       ),
     );
+
   const client = new GameClient(origin, store, request);
+
   await expect(client.invoke('character/activity', {})).rejects.toMatchObject({
     code: 'AUTH_REQUIRED',
     detail: {
@@ -392,12 +428,14 @@ it.each(['invoke', 'readDocument', 'login'] as const)(
         { status: 429 },
       ),
     );
+
     const client = new GameClient(origin, store, request);
     const actions = {
       invoke: () => client.invoke('character/activity', {}),
       readDocument: () => client.readDocument('guide', z.object({})),
       login: () => client.login(),
     };
+
     const result = actions[method]();
     await expect(result).rejects.toMatchObject({
       code: 'RATE_LIMITED',
@@ -418,6 +456,7 @@ it('prefers body retry seconds over a conflicting header', async () => {
         { status: 429, headers: { 'Retry-After': '1' } },
       ),
     );
+
   await expect(
     new GameClient(origin, undefined, request).login(),
   ).rejects.toMatchObject({
@@ -437,6 +476,7 @@ it('uses numeric header seconds for OAuth rate limits', async () => {
         { status: 429, headers: { 'Retry-After': '1' } },
       ),
     );
+
   await expect(
     new GameClient(origin, undefined, request).login(),
   ).rejects.toMatchObject({
@@ -469,7 +509,9 @@ it('returns device approval immediately and exchanges the pending code on the ne
         scope: 'game:read game:play offline_access',
       }),
     );
+
   const client = new GameClient(origin, store, request);
+
   const result = await client.login();
   expect(result).toEqual({
     ok: true,
@@ -479,6 +521,7 @@ it('returns device approval immediately and exchanges the pending code on the ne
   });
   expect(request).toHaveBeenCalledTimes(1);
   expect(JSON.stringify(result)).not.toContain('private-device');
+
   expect(await client.accessToken()).toBe('new-access');
   expect(request).toHaveBeenCalledTimes(2);
 });
@@ -496,6 +539,7 @@ it('forgets a pending authorization once it expires or the server refuses it', a
     { expires_at: later, body: '{"error":"slow_down"}', kept: true },
     { expires_at: later, body: 'private upstream details', kept: true },
   ];
+
   for (const { expires_at, body, kept } of cases) {
     const { store, path } = await fixture();
     await store.update((entries) => {
@@ -506,12 +550,16 @@ it('forgets a pending authorization once it expires or the server refuses it', a
       .mockImplementation(() =>
         Promise.resolve(new Response(body, { status: 400 })),
       );
+
     const client = new GameClient(origin, store, request);
+
     await expect(client.accessToken()).rejects.toMatchObject({
       code: 'AUTH_NOT_COMPLETED',
     });
+
     const saved = JSON.parse(await readFile(path, 'utf8')) as object;
     expect(origin in saved).toBe(kept);
+
     await expect(client.accessToken()).rejects.toMatchObject({
       code: kept ? 'AUTH_NOT_COMPLETED' : 'AUTH_REQUIRED',
     });

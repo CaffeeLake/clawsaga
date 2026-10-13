@@ -13,6 +13,7 @@ const result = {
   server_time: '2026-09-20T00:00:00.000Z',
   data: {},
 } as const;
+
 const traveler = 'Traveler0000';
 const thread = '123';
 
@@ -20,6 +21,7 @@ it('maps Community Board flags and cursors to the board requests', async () => {
   const invoke = vi.spyOn(GameClient.prototype, 'invoke').mockResolvedValue({
     ...result,
   });
+
   await execute(
     [
       'board',
@@ -68,6 +70,7 @@ it('sends a body from an input file', async () => {
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockResolvedValue({ ...result });
+
   const body = 'Coal is cheap in Dolgan.';
   vi.mocked(readFile).mockResolvedValue(
     JSON.stringify({ category: 'lore', title: 'Coal prices', body }),

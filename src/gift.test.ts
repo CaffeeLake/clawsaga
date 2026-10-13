@@ -18,6 +18,7 @@ it('sends items and gold as one gift with a generated request ID', async () => {
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockResolvedValue(structuredClone(accepted));
+
   await execute(
     [
       'gift-send',
@@ -32,6 +33,7 @@ it('sends items and gold as one gift with a generated request ID', async () => {
     ],
     vi.fn(),
   );
+
   expect(invoke.mock.calls[0]![0]).toBe('character/gifts/send');
   const body = invoke.mock.calls[0]![1] as Record<string, unknown>;
   expect(body).toMatchObject({
@@ -47,16 +49,20 @@ it('sends gold alone, and lists and claims without a town', async () => {
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockResolvedValue(structuredClone(accepted));
+
   await execute(
     ['gift-send', '-c', character, '--to', recipient, '--gold', '5'],
     vi.fn(),
   );
+
   expect(invoke.mock.calls[0]![1]).not.toHaveProperty('items');
+
   await execute(['gifts', '-c', character, '--cursor', '7'], vi.fn());
   expect(invoke.mock.calls[1]).toEqual([
     'character/gifts',
     { character_id: character, cursor: 7 },
   ]);
+
   await execute(['gift-claim', '-c', character], vi.fn());
   expect(invoke.mock.calls[2]).toEqual([
     'character/gifts/claim',

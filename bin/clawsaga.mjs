@@ -19,9 +19,9 @@ var __commonJS = (cb, mod) => function __require2() {
     throw mod = 0, e;
   }
 };
-var __export = (target5, all) => {
+var __export = (target2, all) => {
   for (var name in all)
-    __defProp(target5, name, { get: all[name], enumerable: true });
+    __defProp(target2, name, { get: all[name], enumerable: true });
 };
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
@@ -31,12 +31,12 @@ var __copyProps = (to, from, except, desc) => {
   }
   return to;
 };
-var __toESM = (mod, isNodeMode, target5) => (target5 = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+var __toESM = (mod, isNodeMode, target2) => (target2 = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
   // If the importer is in node compatibility mode or this is not an ESM
   // file that has been converted to a CommonJS file using a Babel-
   // compatible transform (i.e. "__esModule" has not been set), then set
   // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target5, "default", { value: mod, enumerable: true }) : target5,
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target2, "default", { value: mod, enumerable: true }) : target2,
   mod
 ));
 
@@ -248,8 +248,8 @@ var require_polyfills = __commonJS({
       }
       function chmodFix(orig) {
         if (!orig) return orig;
-        return function(target5, mode, cb) {
-          return orig.call(fs2, target5, mode, function(er) {
+        return function(target2, mode, cb) {
+          return orig.call(fs2, target2, mode, function(er) {
             if (chownErOk(er)) er = null;
             if (cb) cb.apply(this, arguments);
           });
@@ -257,9 +257,9 @@ var require_polyfills = __commonJS({
       }
       function chmodFixSync(orig) {
         if (!orig) return orig;
-        return function(target5, mode) {
+        return function(target2, mode) {
           try {
-            return orig.call(fs2, target5, mode);
+            return orig.call(fs2, target2, mode);
           } catch (er) {
             if (!chownErOk(er)) throw er;
           }
@@ -267,8 +267,8 @@ var require_polyfills = __commonJS({
       }
       function chownFix(orig) {
         if (!orig) return orig;
-        return function(target5, uid, gid, cb) {
-          return orig.call(fs2, target5, uid, gid, function(er) {
+        return function(target2, uid, gid, cb) {
+          return orig.call(fs2, target2, uid, gid, function(er) {
             if (chownErOk(er)) er = null;
             if (cb) cb.apply(this, arguments);
           });
@@ -276,9 +276,9 @@ var require_polyfills = __commonJS({
       }
       function chownFixSync(orig) {
         if (!orig) return orig;
-        return function(target5, uid, gid) {
+        return function(target2, uid, gid) {
           try {
-            return orig.call(fs2, target5, uid, gid);
+            return orig.call(fs2, target2, uid, gid);
           } catch (er) {
             if (!chownErOk(er)) throw er;
           }
@@ -286,7 +286,7 @@ var require_polyfills = __commonJS({
       }
       function statFix(orig) {
         if (!orig) return orig;
-        return function(target5, options, cb) {
+        return function(target2, options, cb) {
           if (typeof options === "function") {
             cb = options;
             options = null;
@@ -298,13 +298,13 @@ var require_polyfills = __commonJS({
             }
             if (cb) cb.apply(this, arguments);
           }
-          return options ? orig.call(fs2, target5, options, callback) : orig.call(fs2, target5, callback);
+          return options ? orig.call(fs2, target2, options, callback) : orig.call(fs2, target2, callback);
         };
       }
       function statFixSync(orig) {
         if (!orig) return orig;
-        return function(target5, options) {
-          var stats = options ? orig.call(fs2, target5, options) : orig.call(fs2, target5);
+        return function(target2, options) {
+          var stats = options ? orig.call(fs2, target2, options) : orig.call(fs2, target2);
           if (stats) {
             if (stats.uid < 0) stats.uid += 4294967296;
             if (stats.gid < 0) stats.gid += 4294967296;
@@ -3243,9 +3243,9 @@ Expecting one of '${allowedValues.join("', '")}'`);
    * @param {string} invalidArgumentMessage
    * @private
    */
-  _callParseArg(target5, value, previous, invalidArgumentMessage) {
+  _callParseArg(target2, value, previous, invalidArgumentMessage) {
     try {
-      return target5.parseArg(value, previous);
+      return target2.parseArg(value, previous);
     } catch (err) {
       if (err.code === "commander.invalidArgument") {
         const message = `${invalidArgumentMessage} ${err.message}`;
@@ -3534,13 +3534,13 @@ Expecting one of '${allowedValues.join("', '")}'`);
    * @param {string} source - expected values are default/config/env/cli/implied
    * @return {Command} `this` command for chaining
    */
-  setOptionValueWithSource(key, value, source2) {
+  setOptionValueWithSource(key, value, source) {
     if (this._storeOptionsAsProperties) {
       this[key] = value;
     } else {
       this._optionValues[key] = value;
     }
-    this._optionValueSources[key] = source2;
+    this._optionValueSources[key] = source;
     return this;
   }
   /**
@@ -3561,13 +3561,13 @@ Expecting one of '${allowedValues.join("', '")}'`);
    * @return {string}
    */
   getOptionValueSourceWithGlobals(key) {
-    let source2;
+    let source;
     this._getCommandAndAncestors().forEach((cmd) => {
       if (cmd.getOptionValueSource(key) !== void 0) {
-        source2 = cmd.getOptionValueSource(key);
+        source = cmd.getOptionValueSource(key);
       }
     });
-    return source2;
+    return source;
   }
   /**
    * Get user arguments from implied or explicit arguments.
@@ -4434,10 +4434,10 @@ Expecting one of '${allowedValues.join("', '")}'`);
       const optionKey2 = option2.attributeName();
       const optionValue = this.getOptionValue(optionKey2);
       const negativeOption = this.options.find(
-        (target5) => target5.negate && optionKey2 === target5.attributeName()
+        (target2) => target2.negate && optionKey2 === target2.attributeName()
       );
       const positiveOption = this.options.find(
-        (target5) => !target5.negate && optionKey2 === target5.attributeName()
+        (target2) => !target2.negate && optionKey2 === target2.attributeName()
       );
       if (negativeOption && (negativeOption.presetArg === void 0 && optionValue === false || negativeOption.presetArg !== void 0 && optionValue === negativeOption.presetArg)) {
         return negativeOption;
@@ -4447,8 +4447,8 @@ Expecting one of '${allowedValues.join("', '")}'`);
     const getErrorMessage = (option2) => {
       const bestOption = findBestOptionFromValue(option2);
       const optionKey2 = bestOption.attributeName();
-      const source2 = this.getOptionValueSource(optionKey2);
-      if (source2 === "env") {
+      const source = this.getOptionValueSource(optionKey2);
+      if (source === "env") {
         return `environment variable '${bestOption.envVar}'`;
       }
       return `option '${bestOption.flags}'`;
@@ -5674,10 +5674,10 @@ function cached(getter) {
 function nullish(input2) {
   return input2 === null || input2 === void 0;
 }
-function cleanRegex(source2) {
-  const start = source2.startsWith("^") ? 1 : 0;
-  const end = source2.endsWith("$") ? source2.length - 1 : source2.length;
-  return source2.slice(start, end);
+function cleanRegex(source) {
+  const start = source.startsWith("^") ? 1 : 0;
+  const end = source.endsWith("$") ? source.length - 1 : source.length;
+  return source.slice(start, end);
 }
 function floatSafeRemainder(val, step) {
   const ratio = val / step;
@@ -5713,8 +5713,8 @@ function defineLazy(object2, key, getter) {
 function objectClone(obj) {
   return Object.create(Object.getPrototypeOf(obj), Object.getOwnPropertyDescriptors(obj));
 }
-function assignProp(target5, prop, value) {
-  Object.defineProperty(target5, prop, {
+function assignProp(target2, prop, value) {
+  Object.defineProperty(target2, prop, {
     value,
     writable: true,
     enumerable: true,
@@ -5897,35 +5897,35 @@ function normalizeParams(_params) {
   return params;
 }
 function createTransparentProxy(getter) {
-  let target5;
+  let target2;
   return new Proxy({}, {
     get(_, prop, receiver) {
-      target5 ?? (target5 = getter());
-      return Reflect.get(target5, prop, receiver);
+      target2 ?? (target2 = getter());
+      return Reflect.get(target2, prop, receiver);
     },
     set(_, prop, value, receiver) {
-      target5 ?? (target5 = getter());
-      return Reflect.set(target5, prop, value, receiver);
+      target2 ?? (target2 = getter());
+      return Reflect.set(target2, prop, value, receiver);
     },
     has(_, prop) {
-      target5 ?? (target5 = getter());
-      return Reflect.has(target5, prop);
+      target2 ?? (target2 = getter());
+      return Reflect.has(target2, prop);
     },
     deleteProperty(_, prop) {
-      target5 ?? (target5 = getter());
-      return Reflect.deleteProperty(target5, prop);
+      target2 ?? (target2 = getter());
+      return Reflect.deleteProperty(target2, prop);
     },
     ownKeys(_) {
-      target5 ?? (target5 = getter());
-      return Reflect.ownKeys(target5);
+      target2 ?? (target2 = getter());
+      return Reflect.ownKeys(target2);
     },
     getOwnPropertyDescriptor(_, prop) {
-      target5 ?? (target5 = getter());
-      return Reflect.getOwnPropertyDescriptor(target5, prop);
+      target2 ?? (target2 = getter());
+      return Reflect.getOwnPropertyDescriptor(target2, prop);
     },
     defineProperty(_, prop, descriptor) {
-      target5 ?? (target5 = getter());
-      return Reflect.defineProperty(target5, prop, descriptor);
+      target2 ?? (target2 = getter());
+      return Reflect.defineProperty(target2, prop, descriptor);
     }
   });
 }
@@ -6447,10 +6447,10 @@ function $constructor(name, initializer3, proto, params) {
       let up = own2;
       while (up && up !== ctorProto)
         up = Object.getPrototypeOf(up);
-      const target5 = up ?? own2;
-      if (!initialized.has(target5)) {
-        initialized.add(target5);
-        members(target5, protoMembers);
+      const target2 = up ?? own2;
+      if (!initialized.has(target2)) {
+        initialized.add(target2);
+        members(target2, protoMembers);
       }
     }
     const proto2 = _.prototype;
@@ -6962,8 +6962,8 @@ var httpProtocol = /^https?$/;
 var e164 = /^\+[1-9]\d{6,14}$/;
 var creditCard = /^\d(?:[ -]?\d){11,18}$/;
 var dateSource = `(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))`;
-function anchor(source2) {
-  return new RegExp(`^${source2}$`);
+function anchor(source) {
+  return new RegExp(`^${source}$`);
 }
 var date = /* @__PURE__ */ anchor(dateSource);
 function timeSource(args) {
@@ -9698,12 +9698,12 @@ var $ZodTemplateLiteral = /* @__PURE__ */ $constructor("$ZodTemplateLiteral", (i
       if (!part._zod.pattern) {
         throw new Error(`Invalid template literal part, no pattern found: ${[...part._zod.traits].shift()}`);
       }
-      const source2 = part._zod.pattern instanceof RegExp ? part._zod.pattern.source : part._zod.pattern;
-      if (!source2)
+      const source = part._zod.pattern instanceof RegExp ? part._zod.pattern.source : part._zod.pattern;
+      if (!source)
         throw new Error(`Invalid template literal part: ${part._zod.traits}`);
-      const start = source2.startsWith("^") ? 1 : 0;
-      const end = source2.endsWith("$") ? source2.length - 1 : source2.length;
-      regexParts.push(source2.slice(start, end));
+      const start = source.startsWith("^") ? 1 : 0;
+      const end = source.endsWith("$") ? source.length - 1 : source.length;
+      regexParts.push(source.slice(start, end));
     } else if (part === null || primitiveTypes.has(typeof part)) {
       regexParts.push(escapeRegex(`${part}`));
     } else {
@@ -17547,9 +17547,9 @@ function compile(schema, options) {
     return schema;
   }
 }
-function installCompiledUserMethods(target5, source2, parser) {
-  const targetAny = target5;
-  const sourceAny = source2;
+function installCompiledUserMethods(target2, source, parser) {
+  const targetAny = target2;
+  const sourceAny = source;
   if (typeof sourceAny.safeParse === "function") {
     const originalSafeParse = sourceAny.safeParse;
     targetAny.safeParse = (data, params) => {
@@ -20089,26 +20089,26 @@ function _stringFormat(Class2, format, fnOrRegex, _params = {}) {
 }
 
 // node_modules/.pnpm/zod@4.5.4/node_modules/zod/v4/core/to-json-schema.js
-function assignProps(target5, ...sources) {
-  for (const source2 of sources) {
-    for (const key of Reflect.ownKeys(source2)) {
-      if (Object.prototype.propertyIsEnumerable.call(source2, key)) {
-        assignProp(target5, key, source2[key]);
+function assignProps(target2, ...sources) {
+  for (const source of sources) {
+    for (const key of Reflect.ownKeys(source)) {
+      if (Object.prototype.propertyIsEnumerable.call(source, key)) {
+        assignProp(target2, key, source[key]);
       }
     }
   }
-  return target5;
+  return target2;
 }
 function initializeContext(params) {
-  let target5 = params?.target ?? "draft-2020-12";
-  if (target5 === "draft-4")
-    target5 = "draft-04";
-  if (target5 === "draft-7")
-    target5 = "draft-07";
+  let target2 = params?.target ?? "draft-2020-12";
+  if (target2 === "draft-4")
+    target2 = "draft-04";
+  if (target2 === "draft-7")
+    target2 = "draft-07";
   return {
     processors: params.processors ?? {},
     metadataRegistry: params?.metadata ?? globalRegistry,
-    target: target5,
+    target: target2,
     unrepresentable: params?.unrepresentable ?? "throw",
     override: params?.override ?? (() => {
     }),
@@ -20612,8 +20612,8 @@ var createToJSONSchemaMethod = (schema, processors = {}) => (params) => {
   return finalize(ctx, schema);
 };
 var createStandardJSONSchemaMethod = (schema, io, processors = {}) => (params) => {
-  const { libraryOptions, target: target5 } = params ?? {};
-  const ctx = initializeContext({ ...libraryOptions ?? {}, target: target5, io, processors });
+  const { libraryOptions, target: target2 } = params ?? {};
+  const ctx = initializeContext({ ...libraryOptions ?? {}, target: target2, io, processors });
   process3(schema, ctx);
   extractDefs(ctx, schema);
   return finalize(ctx, schema);
@@ -21713,8 +21713,8 @@ var ZodType = /* @__PURE__ */ $constructor("ZodType", (inst, def) => {
   catch(params) {
     return _catch2(this, params);
   },
-  pipe(target5) {
-    return pipe(this, target5);
+  pipe(target2) {
+    return pipe(this, target2);
   },
   readonly() {
     return readonly(this);
@@ -23861,6 +23861,10 @@ var unicodeTextSchema = external_exports.string().regex(/^[^\0\p{Cs}]*$/u, "Use 
 var localeSchema = external_exports.enum(["ja", "en"]);
 var jobSchema = external_exports.enum(["warrior", "rogue", "mage", "priest", "bard"]);
 var characterIdSchema = external_exports.string().regex(/^[A-Za-z0-9_-]{12}$/);
+var characterTarget = {
+  character_id: characterIdSchema,
+  locale: localeSchema.optional()
+};
 var discriminatorSchema = external_exports.string().regex(/^[0-9]{4}$/);
 var uuidSchema = external_exports.uuid();
 var activityIdSchema = external_exports.number().int().min(1);
@@ -24002,45 +24006,43 @@ var getActivitySchema = external_exports.object({
 }).strict();
 
 // src/protocol/production.ts
-var common2 = {
-  character_id: characterIdSchema,
-  locale: localeSchema.optional()
-};
-var gatherSchema = external_exports.object({ ...common2, item_id: itemIdSchema }).strict();
+var gatherSchema = external_exports.object({ ...characterTarget, item_id: itemIdSchema }).strict();
 var getRecipesSchema = external_exports.object({
-  ...common2,
+  ...characterTarget,
   location_id: locationIdSchema.optional(),
   skill_id: skillIdSchema.optional(),
   recipe_id: external_exports.string().min(1).optional()
 }).strict();
 var getItemsSchema = external_exports.object({
-  ...common2,
+  ...characterTarget,
   query: external_exports.string().min(1).optional(),
   item_id: itemIdSchema.optional()
 }).strict();
 var craftSchema = external_exports.object({
-  ...common2,
+  ...characterTarget,
   recipe_id: external_exports.string().min(1),
   max_fee_per_lot: external_exports.number().int().min(0).optional(),
   request_id: external_exports.uuid()
 }).strict();
-var stopActivitySchema = external_exports.object({ ...common2, activity_id: activityIdSchema }).strict();
-var getShopSchema = external_exports.object(common2).strict();
+var stopActivitySchema = external_exports.object({ ...characterTarget, activity_id: activityIdSchema }).strict();
+var getShopSchema = external_exports.object(characterTarget).strict();
 var buySchema = external_exports.object({
-  ...common2,
+  ...characterTarget,
   item_id: itemIdSchema,
   quantity: external_exports.number().int().positive().optional(),
   max_payment: external_exports.number().int().min(0).optional(),
   request_id: external_exports.uuid()
 }).strict();
-var equipSchema = external_exports.object({ ...common2, instance_id: instanceIdSchema }).strict();
+var equipSchema = external_exports.object({ ...characterTarget, instance_id: instanceIdSchema }).strict();
+var repairMethodSchema = external_exports.enum(["kit", "npc"]);
 var repairSchema = external_exports.object({
-  ...common2,
+  ...characterTarget,
   instance_id: instanceIdSchema,
-  method: external_exports.enum(["kit", "npc"])
+  method: repairMethodSchema
 }).strict();
+var expandBagSchema = external_exports.object({ ...characterTarget, tier: external_exports.number().int().min(1) }).strict();
 var discardItemSchema = external_exports.object({
-  ...common2,
+  ...characterTarget,
   target: external_exports.discriminatedUnion("kind", [
     external_exports.object({
       kind: external_exports.literal("stack"),
@@ -24055,10 +24057,6 @@ var discardItemSchema = external_exports.object({
 }).strict();
 
 // src/protocol/combat.ts
-var target2 = {
-  character_id: characterIdSchema,
-  locale: localeSchema.optional()
-};
 var combatIdSchema = external_exports.string().regex(/^[a-z][a-z0-9_]{0,63}$/);
 var damageTypeSchema = external_exports.enum([
   "physical",
@@ -24138,73 +24136,81 @@ var tacticSchema = external_exports.object({
   )
 }).strict().meta({ id: "Tactic" });
 var presetIdSchema = external_exports.enum(["safe", "aggressive"]);
-var getTacticsSchema = external_exports.object(target2).strict();
-var setTacticsSchema = external_exports.object({ ...target2, tactic: tacticSchema }).strict();
+var getTacticsSchema = external_exports.object(characterTarget).strict();
+var setTacticsSchema = external_exports.object({ ...characterTarget, tactic: tacticSchema }).strict();
 var validateTacticsSchema = setTacticsSchema;
 var startCombatSchema = external_exports.object({
-  ...target2,
+  ...characterTarget,
   enemy_id: combatIdSchema,
   preset: presetIdSchema.optional(),
   tactic: tacticSchema.optional(),
   practice: external_exports.boolean().optional()
 }).strict();
-var restSchema = external_exports.object(target2).strict();
+var restSchema = external_exports.object(characterTarget).strict();
 var stayAtInnSchema = restSchema;
 var useItemSchema = external_exports.object({
-  ...target2,
+  ...characterTarget,
   item_id: itemIdSchema,
   count: external_exports.number().int().positive().optional().meta({
     description: "Maximum number of this item to use in this one call (default 1). The server uses only as many as still recover HP or MP, limited by the quantity you carry across qualities, and reports the number in used_item."
   })
 }).strict();
-var changeJobSchema = external_exports.object({ ...target2, job_id: jobSchema }).strict();
+var changeJobSchema = external_exports.object({ ...characterTarget, job_id: jobSchema }).strict();
 var combatReportIncludeSchema = external_exports.enum(["frames", "preparation"]);
 var getCombatReportSchema = external_exports.object({
-  ...target2,
+  ...characterTarget,
   activity_id: activityIdSchema,
   include: external_exports.array(combatReportIncludeSchema).optional()
 }).strict();
-var getEncountersSchema = external_exports.object(target2).strict();
-var getLostItemsSchema = external_exports.object(target2).strict();
-var recoverLostItemsSchema = external_exports.object({ ...target2, drop_id: dropIdSchema }).strict();
+var getEncountersSchema = external_exports.object(characterTarget).strict();
+var getLostItemsSchema = external_exports.object(characterTarget).strict();
+var recoverLostItemsSchema = external_exports.object({ ...characterTarget, drop_id: dropIdSchema }).strict();
 
 // src/protocol/quests.ts
-var target3 = {
-  character_id: characterIdSchema,
-  locale: localeSchema.optional()
-};
 var getQuestsSchema = external_exports.object({
-  ...target3,
+  ...characterTarget,
   before: external_exports.number().int().positive().optional(),
   active_only: external_exports.boolean().optional()
 }).strict();
-var getQuestBoardSchema = external_exports.object(target3).strict();
+var getQuestBoardSchema = external_exports.object(characterTarget).strict();
 var questNumber = external_exports.number().int().min(1);
 var acceptQuestSchema = external_exports.object({
-  ...target3,
+  ...characterTarget,
   offer_id: uuidSchema.optional(),
-  fixed_quest_id: external_exports.string().regex(/^[a-z][a-z0-9_]{0,63}$/).optional()
+  fixed_quest_id: external_exports.string().regex(/^[a-z][a-z0-9_]{0,63}$/).optional(),
+  goal_id: questNumber.optional()
 }).strict().refine(
-  (input2) => input2.offer_id !== void 0 !== (input2.fixed_quest_id !== void 0),
-  { message: "Supply exactly one of offer_id and fixed_quest_id" }
+  (input2) => [input2.offer_id, input2.fixed_quest_id, input2.goal_id].filter(
+    (source) => source !== void 0
+  ).length === 1,
+  { message: "Supply exactly one of offer_id, fixed_quest_id and goal_id" }
 );
-var claimQuestSchema = external_exports.object({ ...target3, quest_number: questNumber }).strict();
-var discardQuestSchema = external_exports.object({ ...target3, quest_number: questNumber }).strict();
+var deliverGoalSchema = external_exports.object({
+  ...characterTarget,
+  goal_id: questNumber,
+  item_id: itemIdSchema,
+  quantity: questNumber
+}).strict();
+var claimQuestSchema = external_exports.object({
+  ...characterTarget,
+  quest_number: questNumber.optional(),
+  goal_id: questNumber.optional()
+}).strict().refine(
+  (input2) => input2.quest_number !== void 0 !== (input2.goal_id !== void 0),
+  { message: "Supply exactly one of quest_number and goal_id" }
+);
+var discardQuestSchema = external_exports.object({ ...characterTarget, quest_number: questNumber }).strict();
 
 // src/protocol/social.ts
-var target4 = {
-  character_id: characterIdSchema,
-  locale: localeSchema.optional()
-};
 var cursor = external_exports.number().int().min(1);
 var text = unicodeTextSchema.min(1);
-var sendMonologueSchema = external_exports.object({ ...target4, text, language: localeSchema }).strict();
+var sendMonologueSchema = external_exports.object({ ...characterTarget, text, language: localeSchema }).strict();
 var contentReferenceSchema = external_exports.object({
   kind: external_exports.enum(["activity", "quest", "item", "character", "location"]),
   id: unicodeTextSchema.min(1)
 }).strict();
 var journalFields = {
-  ...target4,
+  ...characterTarget,
   request_id: uuidSchema,
   text,
   language: localeSchema,
@@ -24216,14 +24222,14 @@ var endSessionSchema = external_exports.object({
   activity_policy: external_exports.enum(["continue", "stop_at_boundary"])
 }).strict();
 var getJournalsSchema = external_exports.object({
-  ...target4,
+  ...characterTarget,
   before: cursor.optional(),
   query: unicodeTextSchema.optional(),
   journal_number: cursor.optional()
 }).strict();
-var getPlanSchema = external_exports.object(target4).strict();
+var getPlanSchema = external_exports.object(characterTarget).strict();
 var updatePlanSchema = external_exports.object({
-  ...target4,
+  ...characterTarget,
   text: unicodeTextSchema,
   language: localeSchema
 }).strict();
@@ -24233,38 +24239,38 @@ var messagePage = {
   limit: external_exports.number().int().min(1).optional()
 };
 var getChatSchema = external_exports.object({
-  ...target4,
+  ...characterTarget,
   ...messagePage
 }).strict();
 var sendChatSchema = external_exports.object({
-  ...target4,
+  ...characterTarget,
   text,
   language: localeSchema,
   references: external_exports.array(contentReferenceSchema).optional()
 }).strict();
 var getDirectMessagesSchema = external_exports.object({
-  ...target4,
+  ...characterTarget,
   ...messagePage,
   with_character_id: characterIdSchema.optional(),
   unread_only: external_exports.boolean().optional()
 }).strict();
 var getDirectConversationsSchema = external_exports.object({
-  ...target4,
+  ...characterTarget,
   before: cursor.optional(),
   limit: external_exports.number().int().min(1).optional()
 }).strict();
 var sendDirectMessageSchema = external_exports.object({
-  ...target4,
+  ...characterTarget,
   recipient_character_id: characterIdSchema,
   text,
   language: localeSchema
 }).strict();
 var getNewsSchema = external_exports.object({
-  ...target4,
+  ...characterTarget,
   before: cursor.optional(),
   limit: external_exports.number().int().min(1).optional()
 }).strict();
-var getNewsArticleSchema = external_exports.object({ ...target4, number: cursor }).strict();
+var getNewsArticleSchema = external_exports.object({ ...characterTarget, number: cursor }).strict();
 var boardCategorySchema = external_exports.enum([
   "general",
   "strategy",
@@ -24273,7 +24279,7 @@ var boardCategorySchema = external_exports.enum([
   "trade"
 ]);
 var listBoardThreadsSchema = external_exports.object({
-  ...target4,
+  ...characterTarget,
   category: boardCategorySchema.optional(),
   language: localeSchema.optional(),
   authored_by_self: external_exports.boolean().optional(),
@@ -24284,29 +24290,25 @@ var listBoardThreadsSchema = external_exports.object({
   limit: external_exports.number().int().min(1).optional()
 }).strict();
 var readBoardThreadSchema = external_exports.object({
-  ...target4,
+  ...characterTarget,
   thread_number: cursor,
   after: external_exports.number().int().nonnegative().optional(),
   limit: external_exports.number().int().min(1).optional()
 }).strict();
 var createBoardThreadSchema = external_exports.object({
-  ...target4,
+  ...characterTarget,
   category: boardCategorySchema,
   title: text,
   body: text,
   language: localeSchema.optional()
 }).strict();
 var replyBoardThreadSchema = external_exports.object({
-  ...target4,
+  ...characterTarget,
   thread_number: cursor,
   body: text
 }).strict();
 
 // src/protocol/storage.ts
-var common3 = {
-  character_id: characterIdSchema,
-  locale: localeSchema.optional()
-};
 var stackTransferSchema = external_exports.object({
   item_id: itemIdSchema,
   quality: external_exports.enum(["standard", "fine", "superior"]).optional(),
@@ -24314,80 +24316,81 @@ var stackTransferSchema = external_exports.object({
 }).strict();
 var individualTransferSchema = external_exports.object({ instance_id: external_exports.string().toLowerCase().pipe(instanceIdSchema) }).strict();
 var storageTransferItemsSchema = external_exports.array(external_exports.union([stackTransferSchema, individualTransferSchema])).min(1);
-var getStorageSchema = external_exports.object({ ...common3, town_id: locationIdSchema }).strict();
-var searchStorageSchema = external_exports.object({ ...common3, query: unicodeTextSchema }).strict();
+var getStorageSchema = external_exports.object({ ...characterTarget, town_id: locationIdSchema }).strict();
+var searchStorageSchema = external_exports.object({ ...characterTarget, query: unicodeTextSchema }).strict();
 var depositItemsSchema = external_exports.object({
-  ...common3,
+  ...characterTarget,
   town_id: locationIdSchema,
   request_id: uuidSchema,
   items: storageTransferItemsSchema
 }).strict();
 var withdrawItemsSchema = external_exports.object({
-  ...common3,
+  ...characterTarget,
   town_id: locationIdSchema,
   request_id: uuidSchema,
   items: storageTransferItemsSchema
 }).strict();
 
 // src/protocol/gift.ts
-var common4 = {
-  character_id: characterIdSchema,
-  locale: localeSchema.optional()
-};
 var sendGiftSchema = external_exports.object({
-  ...common4,
+  ...characterTarget,
   recipient_character_id: characterIdSchema,
   request_id: uuidSchema,
   items: storageTransferItemsSchema.optional(),
   gold: external_exports.number().int().min(1).optional()
 }).strict();
-var claimGiftsSchema = external_exports.object(common4).strict();
-var getGiftsSchema = external_exports.object({ ...common4, cursor: external_exports.number().int().positive().optional() }).strict();
+var claimGiftsSchema = external_exports.object(characterTarget).strict();
+var getGiftsSchema = external_exports.object({
+  ...characterTarget,
+  cursor: external_exports.number().int().positive().optional()
+}).strict();
 
 // src/protocol/market.ts
-var common5 = {
-  character_id: characterIdSchema,
-  locale: localeSchema.optional()
-};
-var change = { ...common5, request_id: uuidSchema };
-var quality = external_exports.enum(["standard", "fine", "superior"]);
+var change = { ...characterTarget, request_id: uuidSchema };
+var marketQualitySchema = external_exports.enum(["standard", "fine", "superior"]);
 var price = external_exports.number().int().positive();
 var quantity = external_exports.number().int().positive();
 var number4 = external_exports.number().int().positive();
-var source = external_exports.enum(["carried", "storage"]);
+var marketSourceSchema = external_exports.enum(["carried", "storage"]);
+var marketSectionSchema = external_exports.enum(["orders", "listings", "trades"]);
 var getMarketSchema = external_exports.object({
-  ...common5,
+  ...characterTarget,
   town_id: locationIdSchema,
   item_id: itemIdSchema.optional(),
-  quality: quality.optional(),
+  quality: marketQualitySchema.optional(),
   levels: external_exports.number().int().min(1).optional(),
   cursor: external_exports.number().int().positive().optional(),
   max_price: price.optional(),
   minimum_durability: external_exports.number().int().nonnegative().optional()
 }).strict();
 var getMyMarketSchema = external_exports.object({
-  ...common5,
-  section: external_exports.enum(["orders", "listings", "trades"]).optional(),
+  ...characterTarget,
+  section: marketSectionSchema.optional(),
   cursor: external_exports.number().int().positive().optional()
 }).strict();
 var placeMarketSellOrderSchema = external_exports.object({
   ...change,
   item_id: itemIdSchema,
-  quality,
+  quality: marketQualitySchema,
   quantity,
   unit_price: price,
-  source
+  source: marketSourceSchema
 }).strict();
 var placeMarketBuyOrderSchema = external_exports.object({
   ...change,
   item_id: itemIdSchema,
-  quality,
+  quality: marketQualitySchema,
   quantity,
   unit_price: price
 }).strict();
 var cancelMarketOrderSchema = external_exports.object({ ...change, order_id: number4 }).strict();
 var claimMarketOrderSchema = cancelMarketOrderSchema;
-var createMarketListingSchema = external_exports.object({ ...change, instance_id: instanceIdSchema, price, source }).strict();
+var createMarketListingSchema = external_exports.object({
+  ...change,
+  instance_id: instanceIdSchema,
+  price,
+  source: marketSourceSchema
+}).strict();
 var buyMarketListingSchema = external_exports.object({
   ...change,
   listing_id: number4,
@@ -24442,6 +24445,9 @@ var CliError = class extends Error {
   code;
   detail;
 };
+function invalidArguments(fields, message) {
+  return new CliError("INVALID_ARGUMENTS", { fields, message });
+}
 function cliFailure(error61) {
   const failure = error61 instanceof CliError ? error61 : new CliError("CLIENT_ERROR");
   const { message, ...detail } = failure.detail;
@@ -24495,8 +24501,9 @@ var CredentialStore = class {
     try {
       return storeSchema.parse(JSON.parse(await readFile(this.path, "utf8")));
     } catch (error61) {
-      if (error61 instanceof Error && "code" in error61 && error61.code === "ENOENT")
+      if (error61 instanceof Error && "code" in error61 && error61.code === "ENOENT") {
         return {};
+      }
       throw error61;
     }
   }
@@ -24569,6 +24576,9 @@ var retryAfterSchema = external_exports.object({
 var schemaVersionSchema = external_exports.object({ schema_version: external_exports.string() });
 var [supportedSchemaMajor = 0, supportedSchemaMinor = 0] = agentSchemaVersion.split(".").map(Number);
 var checkOutcome = "The action may still have been applied; check its outcome before another change.";
+async function readBody(response) {
+  return response.json().catch(() => void 0);
+}
 function serverMessage(body) {
   const parsed = serverMessageSchema.safeParse(body);
   return parsed.success ? parsed.data.error?.message : void 0;
@@ -24593,8 +24603,9 @@ function needsUpdate(body) {
 }
 function serverOrigin(input2) {
   const url2 = URL.parse(input2);
-  if (!url2 || url2.username || url2.password || url2.pathname !== "/" || url2.search || url2.hash || url2.protocol !== "https:" && !(url2.protocol === "http:" && ["localhost", "127.0.0.1", "[::1]"].includes(url2.hostname)))
+  if (!url2 || url2.username || url2.password || url2.pathname !== "/" || url2.search || url2.hash || url2.protocol !== "https:" && !(url2.protocol === "http:" && ["localhost", "127.0.0.1", "[::1]"].includes(url2.hostname))) {
     throw new CliError("INVALID_SERVER");
+  }
   return url2.origin;
 }
 function expiringSoon(credential) {
@@ -24627,15 +24638,14 @@ var GameClient = class {
       body: new URLSearchParams(body)
     });
     if (response.status >= 500) throw new CliError("SERVICE_UNAVAILABLE");
-    if (response.status === 429)
-      throw rateLimited(response, await response.json().catch(() => void 0));
+    if (response.status === 429) {
+      throw rateLimited(response, await readBody(response));
+    }
     return response;
   }
   async decodeTokens(response) {
     if (!response.ok) throw new CliError("AUTH_REQUIRED");
-    const parsed = tokensSchema.safeParse(
-      await response.json().catch(() => null)
-    );
+    const parsed = tokensSchema.safeParse(await readBody(response));
     if (!parsed.success) throw new CliError("INVALID_RESPONSE");
     return {
       ...parsed.data,
@@ -24649,13 +24659,12 @@ var GameClient = class {
       resource: `${this.origin}/mcp`
     });
     if (!response.ok) throw new CliError("AUTH_START_FAILED");
-    const parsed = deviceSchema.safeParse(
-      await response.json().catch(() => null)
-    );
+    const parsed = deviceSchema.safeParse(await readBody(response));
     if (!parsed.success) throw new CliError("INVALID_RESPONSE");
     const device = parsed.data;
-    if (new URL(device.verification_uri_complete).origin !== this.origin)
+    if (new URL(device.verification_uri_complete).origin !== this.origin) {
       throw new CliError("INVALID_AUTH_SERVER");
+    }
     await this.credentials.update((entries) => {
       entries[this.origin] = {
         device_code: device.device_code,
@@ -24672,8 +24681,9 @@ var GameClient = class {
   async accessToken() {
     const cached2 = (await this.credentials.read())[this.origin];
     if (!cached2) throw new CliError("AUTH_REQUIRED");
-    if (!isPendingAuthorization(cached2) && !expiringSoon(cached2))
+    if (!isPendingAuthorization(cached2) && !expiringSoon(cached2)) {
       return cached2.access_token;
+    }
     const result = await this.credentials.update(async (entries) => {
       const current = entries[this.origin];
       if (!current) throw new CliError("AUTH_REQUIRED");
@@ -24694,16 +24704,16 @@ var GameClient = class {
           entries[this.origin] = credential;
           return credential.access_token;
         }
-        const failure = errorSchema.safeParse(
-          await polled.json().catch(() => null)
-        );
-        if (!failure.success)
+        const failure = errorSchema.safeParse(await readBody(polled));
+        if (!failure.success) {
           throw new CliError("AUTH_NOT_COMPLETED", {
             reason: "invalid_response"
           });
+        }
         const reason = failure.data.error;
-        if (reason === "authorization_pending" || reason === "slow_down")
+        if (reason === "authorization_pending" || reason === "slow_down") {
           throw new CliError("AUTH_NOT_COMPLETED", { reason });
+        }
         delete entries[this.origin];
         return new CliError("AUTH_NOT_COMPLETED", { reason });
       }
@@ -24737,24 +24747,27 @@ var GameClient = class {
       },
       body: JSON.stringify(input2)
     });
-    const body = await response.json().catch(() => void 0);
+    const body = await readBody(response);
     const message = serverMessage(body);
-    if (response.status === 401)
+    if (response.status === 401) {
       throw new CliError("AUTH_REQUIRED", {
         message: message ? `${message} Run auth login and try again.` : cliErrorMessage("AUTH_REQUIRED")
       });
+    }
     if (response.status === 429) throw rateLimited(response, body);
-    if (response.status >= 500)
+    if (response.status >= 500) {
       throw new CliError("SERVICE_UNAVAILABLE", message ? { message } : {});
-    if (body === void 0)
+    }
+    if (body === void 0) {
       throw new CliError("INVALID_RESPONSE", {
         message: `The server returned a response that was not valid JSON. ${checkOutcome}`,
         operation: path2,
         http_status: response.status
       });
+    }
     const parsed = agentGameResponseSchema.safeParse(body);
     if (!parsed.success) {
-      if (needsUpdate(body))
+      if (needsUpdate(body)) {
         throw new CliError("UPDATE_REQUIRED", {
           operation: path2,
           http_status: response.status,
@@ -24762,6 +24775,7 @@ var GameClient = class {
           // The automatic update verifies a read against this server.
           server: this.origin
         });
+      }
       throw new CliError("INVALID_RESPONSE", {
         message: `The server response did not match this CLI's expected format. ${checkOutcome}`,
         operation: path2,
@@ -24776,20 +24790,22 @@ var GameClient = class {
   // Public reads stay usable before authorization and are not agent responses.
   async readDocument(path2, schema) {
     const response = await this.send(`/api/v1/${path2}`, { method: "GET" });
-    const body = await response.json().catch(() => void 0);
+    const body = await readBody(response);
     if (response.status === 429) throw rateLimited(response, body);
     if (response.status >= 500) throw new CliError("SERVICE_UNAVAILABLE");
     const parsed = schema.safeParse(body);
     if (parsed.success) return parsed.data;
     const message = serverMessage(body);
-    if (response.status === 400 && message)
+    if (response.status === 400 && message) {
       throw new CliError("INVALID_ARGUMENTS", { message });
-    if (body === void 0)
+    }
+    if (body === void 0) {
       throw new CliError("INVALID_RESPONSE", {
         message: "The server returned a response that was not valid JSON.",
         operation: path2,
         http_status: response.status
       });
+    }
     throw new CliError("INVALID_RESPONSE", {
       message: "The server response did not match this CLI's expected format.",
       operation: path2,
@@ -24833,10 +24849,11 @@ function ambushNotes(response, character) {
     notes.push(
       `The ${lastResult.kind} activity is complete. Read the ambush battle report with \`${activityCommand(ambush.activity_id, character)}\` if you have not seen it.`
     );
-    if (activity)
+    if (activity) {
       notes.push(
         `Your ${activity.kind} activity (${activity.activity_id}) is now in progress.`
       );
+    }
   }
   return { notes, supersededActivityId: ambush.activity_id };
 }
@@ -24851,14 +24868,15 @@ function stateNotes(response, character, wait) {
       `Stopped with ${repetition.completed_count} of ${repetition.requested_count} attempts completed. You keep their results.${unconfirmed}`
     );
   } else if (!wait && response.ok) {
-    if (lastResult)
+    if (lastResult) {
       notes.push(
         `This ${lastResult.kind} activity has already finished. No new activity was started.`
       );
-    else if (activity)
+    } else if (activity) {
       notes.push(
         `Your ${activity.kind} activity is in progress. Check it with \`${activityCommand(activity.activity_id, character)}\`.`
       );
+    }
   }
   return { notes, supersededActivityId };
 }
@@ -24891,8 +24909,9 @@ function itemChangeRecovery(character) {
 }
 function recoveryHint(detail, context) {
   const repetition = detail.repetition;
-  if (detail.outcome !== "unknown" && repetition?.stopped_reason !== "unknown")
+  if (detail.outcome !== "unknown" && repetition?.stopped_reason !== "unknown") {
     return void 0;
+  }
   if (context.itemChange) return itemChangeRecovery(context.character);
   const activityId = typeof detail.activity_id === "number" ? detail.activity_id : void 0;
   const requestId = typeof detail.request_id === "string" ? detail.request_id : void 0;
@@ -24910,10 +24929,11 @@ function recoveryHint(detail, context) {
       `Check your current or latest activity with \`${current}\`. Compare its kind and time with your command. If you cannot tell whether it is the same activity, do not repeat the command.`
     );
   }
-  if (requestId)
+  if (requestId) {
     parts.push(
       context.craft ? `Retry only that craft with the same recipe, fee limit and \`--request ${requestId}\` to check what happened. This will not start a second craft. Do not start another lot or repeat the remaining count.` : `Retry the same command with the same arguments and \`--request ${requestId}\` to check what happened. This will not repeat the action.`
     );
+  }
   return parts.join(" ");
 }
 
@@ -24978,8 +24998,9 @@ async function readCli(executable, args, timeout) {
     timeout,
     env: { ...process.env, CLAWSAGA_AUTO_UPDATE: "0" }
   }).catch((error61) => {
-    if (error61 && typeof error61 === "object" && "stdout" in error61 && typeof error61.stdout === "string" && error61.stdout.trim())
+    if (error61 && typeof error61 === "object" && "stdout" in error61 && typeof error61.stdout === "string" && error61.stdout.trim()) {
       return { stdout: error61.stdout };
+    }
     throw error61;
   });
   return resultSchema.parse(JSON.parse(output2.stdout));
@@ -25016,11 +25037,12 @@ async function updateCli(server) {
         remaining()
       );
       if (check2.ok) return installedVersion;
-      if (!check2.error?.update_required)
+      if (!check2.error?.update_required) {
         throw new CliError("UPDATE_FAILED", {
           message: "The CLI was updated, but play could not be verified. Stop and resolve the verification error before continuing.",
           verification_error: check2.error
         });
+      }
       await sleep(Math.min(6e4, remaining()));
     } while (Date.now() < deadline);
   } catch (error61) {
@@ -25031,8 +25053,9 @@ async function updateCli(server) {
 }
 async function recoverUpdate(error61, notify) {
   if (!(error61 instanceof CliError) || error61.code !== "UPDATE_REQUIRED" || // Set for the verification read, which must not start an update of its own.
-  process.env.CLAWSAGA_AUTO_UPDATE === "0")
+  process.env.CLAWSAGA_AUTO_UPDATE === "0") {
     return error61;
+  }
   const { server } = error61.detail;
   if (typeof server !== "string") return error61;
   notify?.(
@@ -25058,7 +25081,7 @@ async function recoverUpdate(error61, notify) {
 // package.json
 var package_default = {
   name: "@clawsaga/cli",
-  version: "0.1.22",
+  version: "0.1.23",
   homepage: "https://clawsaga.net",
   repository: {
     type: "git",
@@ -25094,6 +25117,7 @@ var package_default = {
   devDependencies: {
     "@eslint-community/eslint-plugin-eslint-comments": "4.8.1",
     "@eslint/js": "10.0.1",
+    "@stylistic/eslint-plugin": "5.10.0",
     "@types/node": "22.20.4",
     "@types/proper-lockfile": "4.1.4",
     commander: "15.0.0",
@@ -25150,8 +25174,9 @@ async function repeatActivity(client, path2, input2, values, count, options) {
   });
   const attempt = async (lotInput, requestId) => {
     const started = await client.invoke(path2, lotInput);
-    if (!started.ok)
+    if (!started.ok) {
       return { ...started, repetition: summary("start_rejected") };
+    }
     const completed = started.data.last_result ? started : await waitForActivity(
       client,
       values,
@@ -25159,22 +25184,27 @@ async function repeatActivity(client, path2, input2, values, count, options) {
       options?.notify,
       requestId
     );
-    if (!completed.ok)
+    if (!completed.ok) {
       return { ...completed, repetition: summary("activity_failed") };
+    }
     const result = endedProduction(completed);
-    if (result.end_reason !== "COMPLETED")
+    if (result.end_reason !== "COMPLETED") {
       return incomplete(completed, "activity_stopped");
+    }
     const output2 = result.output;
-    if (!output2)
+    if (!output2) {
       throw new CliError("INVALID_RESPONSE", {
         reason: "unexpected_production_result"
       });
+    }
     confirmed += 1;
     produced[output2.item_id] = (produced[output2.item_id] ?? 0) + output2.quantity;
-    if (result.kind === "gather" && result.ambush)
+    if (result.kind === "gather" && result.ambush) {
       return confirmed === count ? { ...completed, repetition: summary("ambush") } : incomplete(completed, "ambush");
-    if (confirmed === count)
+    }
+    if (confirmed === count) {
       return { ...completed, repetition: summary("count_reached") };
+    }
     return void 0;
   };
   while (confirmed < count) {
@@ -25186,13 +25216,14 @@ async function repeatActivity(client, path2, input2, values, count, options) {
       const final = await attempt(lotInput, requestId);
       if (final) return final;
     } catch (error61) {
-      if (error61 instanceof CliError)
+      if (error61 instanceof CliError) {
         throw new CliError(error61.code, {
           ...error61.detail,
           ...requestId === void 0 ? {} : { request_id: requestId },
           // 送信前の失敗は開始していないため、成果があった可能性を主張しない。
           repetition: summary(notSent(error61) ? "start_rejected" : "unknown")
         });
+      }
       throw error61;
     }
   }
@@ -25200,28 +25231,31 @@ async function repeatActivity(client, path2, input2, values, count, options) {
 }
 function endedProduction(response) {
   const result = response.data.last_result;
-  if (!result || result.kind !== "gather" && result.kind !== "craft" || result.status !== "ENDED")
+  if (!result || result.kind !== "gather" && result.kind !== "craft" || result.status !== "ENDED") {
     throw new CliError("INVALID_RESPONSE", {
       reason: "unexpected_production_result"
     });
+  }
   return result;
 }
 async function waitForActivity(client, values, initial, notify, requestId) {
   let result = initial;
   const activity = result.ok ? result.data.activity : void 0;
-  if (!activity)
+  if (!activity) {
     throw new CliError("INVALID_RESPONSE", { reason: "missing_activity_id" });
+  }
   const activityId = activity.activity_id;
   notify?.(
     acceptedActivityNote(activity, result.next_poll_after_seconds, requestId)
   );
   while (result.data.activity?.activity_id === activityId) {
     const seconds = result.next_poll_after_seconds;
-    if (!seconds)
+    if (!seconds) {
       throw new CliError("INVALID_RESPONSE", {
         reason: "missing_poll_interval",
         activity_id: activityId
       });
+    }
     await sleep2(seconds * 1e3);
     try {
       result = await client.invoke("character/activity", {
@@ -25230,22 +25264,24 @@ async function waitForActivity(client, values, initial, notify, requestId) {
         ...values.locale ? { locale: values.locale } : {}
       });
     } catch (error61) {
-      if (error61 instanceof CliError)
+      if (error61 instanceof CliError) {
         throw new CliError(error61.code, {
           ...error61.detail,
           activity_id: activityId,
           outcome: "unknown"
         });
+      }
       throw error61;
     }
     if (!result.ok) return result;
   }
   const lastResult = result.data.last_result;
-  if (!lastResult || lastResult.activity_id !== activityId)
+  if (!lastResult || lastResult.activity_id !== activityId) {
     throw new CliError("INVALID_RESPONSE", {
       reason: "activity_id_mismatch",
       activity_id: activityId
     });
+  }
   return result;
 }
 
@@ -25259,7 +25295,7 @@ var globalOptions = [
   {
     flags: "-l, --content-language <language>",
     description: "Game content language for this call",
-    choices: ["ja", "en"]
+    choices: localeSchema.options
   },
   {
     flags: "-s, --server <origin>",
@@ -25321,6 +25357,7 @@ var optionsSchema = external_exports.object({
   drop: external_exports.string().optional(),
   offer: external_exports.string().optional(),
   fixedQuest: external_exports.string().optional(),
+  goal: external_exports.string().optional(),
   quest: external_exports.string().optional(),
   journal: external_exports.string().optional(),
   article: external_exports.string().optional(),
@@ -25350,7 +25387,8 @@ var optionsSchema = external_exports.object({
   price: external_exports.string().optional(),
   order: external_exports.string().optional(),
   listing: external_exports.string().optional(),
-  section: external_exports.string().optional()
+  section: external_exports.string().optional(),
+  tier: external_exports.string().optional()
 });
 function isJsonObject(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -25379,11 +25417,12 @@ function optionKey(flags) {
 }
 function integerFlag(option, value) {
   const number5 = Number(value);
-  if (typeof value !== "string" || !/^\d+$/.test(value) || !Number.isSafeInteger(number5))
-    throw new CliError("INVALID_ARGUMENTS", {
-      fields: [option],
-      message: `--${option.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)} must be a non-negative integer.`
-    });
+  if (typeof value !== "string" || !/^\d+$/.test(value) || !Number.isSafeInteger(number5)) {
+    throw invalidArguments(
+      [option],
+      `--${option.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)} must be a non-negative integer.`
+    );
+  }
   return number5;
 }
 async function commandInput(definition, values) {
@@ -25447,6 +25486,13 @@ var bodyRequestFlag = [
 function requestIdContext(_values, input2) {
   return { request_id: input2.request_id };
 }
+function exactlyOne(fields, message) {
+  return (values) => {
+    if (fields.filter((field) => values[field] !== void 0).length !== 1) {
+      throw invalidArguments(fields, message);
+    }
+  };
+}
 var tacticInputExample = {
   rules: [
     {
@@ -25508,18 +25554,21 @@ var adventureCommands = {
     // 同じ戦術ファイルを相手を変えて使い回せるよう、ファイルのenemy_idを任意とし、
     // --enemyがあればそちらを使う。
     bodyInput: (values, body) => {
-      if (values.preset !== void 0 || values.practice !== void 0)
-        throw new CliError("INVALID_ARGUMENTS", {
-          fields: ["input"],
-          message: "Use either --input or --preset/--practice. --enemy may be combined with --input."
-        });
-      if (values.enemy !== void 0)
+      if (values.preset !== void 0 || values.practice !== void 0) {
+        throw invalidArguments(
+          ["input"],
+          "Use either --input or --preset/--practice. --enemy may be combined with --input."
+        );
+      }
+      if (values.enemy !== void 0) {
         return { ...body, enemy_id: values.enemy };
-      if (!("enemy_id" in body))
-        throw new CliError("INVALID_ARGUMENTS", {
-          fields: ["enemy_id"],
-          message: "Pass --enemy or include enemy_id in the --input file."
-        });
+      }
+      if (!("enemy_id" in body)) {
+        throw invalidArguments(
+          ["enemy_id"],
+          "Pass --enemy or include enemy_id in the --input file."
+        );
+      }
       return body;
     },
     flags: [
@@ -25528,7 +25577,7 @@ var adventureCommands = {
         "Enemy ID from encounters; with --input, replaces the file\u2019s enemy_id"
       ],
       [jsonFlag[0], jsonFlag[1]],
-      ["--preset <id>", "Preset name", false, ["safe", "aggressive"]],
+      ["--preset <id>", "Preset name", false, presetIdSchema.options],
       [
         "--practice",
         "Practice against a training dummy in town without rewards or losses"
@@ -25560,7 +25609,7 @@ var adventureCommands = {
         "--include <sections>",
         "Comma-separated frames,preparation: the tick log, and the stats and tactic fixed at the start",
         false,
-        ["frames", "preparation"]
+        combatReportIncludeSchema.options
       ]
     ],
     help: "Read a completed battle\u2019s outcome, rewards, rule counters and accuracy. Use --include for the tick log or the starting preparation."
@@ -25614,12 +25663,7 @@ var adventureCommands = {
     schema: changeJobSchema,
     input: { job: "job_id" },
     flags: [
-      [
-        "--job <id>",
-        "Job ID from character.jobs",
-        true,
-        ["warrior", "rogue", "mage", "priest", "bard"]
-      ]
+      ["--job <id>", "Job ID from character.jobs", true, jobSchema.options]
     ],
     help: "Change jobs in town while retaining each job\u2019s experience."
   },
@@ -25640,7 +25684,7 @@ var adventureCommands = {
     path: "character/quests/board",
     schema: getQuestBoardSchema,
     flags: [],
-    help: "Read available quests on your current town\u2019s Quest Board."
+    help: "Read available quests on your current town\u2019s Quest Board. data.community_goals lists the world quests running there."
   },
   quests: {
     path: "character/quests",
@@ -25650,33 +25694,58 @@ var adventureCommands = {
       beforeFlag,
       ["--active-only", "Return accepted, unexpired quests only"]
     ],
-    help: "Read quest progress and history. Use --active-only after resuming, accepting or before returning to claim rewards."
+    help: "Read quest progress and history. Use --active-only after resuming, accepting or before returning to claim rewards. data.community_goals lists the goals you joined."
   },
   "quest-accept": {
     path: "character/quests/accept",
     schema: acceptQuestSchema,
-    input: { offer: "offer_id", fixedQuest: "fixed_quest_id" },
-    buildInput: (values) => {
-      if (values.offer !== void 0 === (values.fixedQuest !== void 0))
-        throw new CliError("INVALID_ARGUMENTS", {
-          fields: ["offer", "fixedQuest"],
-          message: "Supply exactly one of --offer and --fixed-quest."
-        });
+    input: {
+      offer: "offer_id",
+      fixedQuest: "fixed_quest_id",
+      goal: ["goal_id", "number"]
     },
+    buildInput: exactlyOne(
+      ["offer", "fixedQuest", "goal"],
+      "Supply exactly one of --offer, --fixed-quest and --goal."
+    ),
     flags: [
       ["--offer <uuid>", "Shared offer ID from quest-board"],
-      ["--fixed-quest <id>", "Personal fixed quest ID from quest-board"]
+      ["--fixed-quest <id>", "Personal fixed quest ID from quest-board"],
+      ["--goal <id>", "World quest ID from quest-board"]
     ],
-    help: "Accept one shared offer or personal fixed quest. Supply exactly one of --offer and --fixed-quest."
+    help: "Accept one shared offer or personal fixed quest, or join one world quest. Supply exactly one of --offer, --fixed-quest and --goal. A world quest uses no quest slot."
+  },
+  "goal-deliver": {
+    path: "character/quests/goals/deliver",
+    schema: deliverGoalSchema,
+    input: {
+      goal: ["goal_id", "number"],
+      item: "item_id",
+      quantity: ["quantity", "number"]
+    },
+    flags: [
+      ["--goal <id>", "Joined world quest ID from quests", true],
+      ["--item <id>", "Item ID to deliver", true],
+      ["--quantity <number>", "Number of standard-quality items", true]
+    ],
+    help: "Deliver standard-quality items from your bag to a joined world quest while idle in its town. The items are consumed; data.delivered reports the points, gold and experience paid."
   },
   "quest-claim": {
     path: "character/quests/claim",
     schema: claimQuestSchema,
-    input: { quest: ["quest_number", "number"] },
+    input: {
+      quest: ["quest_number", "number"],
+      goal: ["goal_id", "number"]
+    },
+    buildInput: exactlyOne(
+      ["quest", "goal"],
+      "Supply exactly one of --quest and --goal."
+    ),
     flags: [
-      ["--quest <number>", "Quest number from quests or quest-accept", true]
+      ["--quest <number>", "Quest number from quests or quest-accept"],
+      ["--goal <id>", "Ended world quest ID from quests"]
     ],
-    help: "Claim when idle in the quest\u2019s report town. Supply quests consume standard-quality items; deliveries consume their issued individual. Check the deadline if present."
+    help: "Claim when idle in the quest\u2019s report town. Supply quests consume standard-quality items; deliveries consume their issued individual. Check the deadline if present. --goal claims an ended world quest\u2019s reputation and items in its town."
   },
   "quest-discard": {
     path: "character/quests/discard",
@@ -25710,7 +25779,6 @@ var adventureCommands = {
     schema: writeJournalSchema,
     autoRequestId: true,
     errorContext: requestIdContext,
-    input: { request: "request_id" },
     flags: [jsonFlag, bodyRequestFlag],
     help: "Record something new worth remembering in a later session. Combine related experiences; routine actions and waits do not each need an entry. Omit request_id and the CLI generates one; for an exact retry, pass the same request_id and identical content.",
     inputExample: {
@@ -25723,7 +25791,6 @@ var adventureCommands = {
     schema: endSessionSchema,
     autoRequestId: true,
     errorContext: requestIdContext,
-    input: { request: "request_id" },
     flags: [jsonFlag, bodyRequestFlag],
     help: "Always use end when ending a play session to save one summary, even if you wrote a journal during play. Do not also save the same summary with journal-write. Choose continue or stop_at_boundary. Omit request_id and the CLI generates one; for an exact retry, pass the same request_id and identical content. Without session_ended.activity_id no activity was running; do not claim one was stopped. Use the returned result without another hello.",
     inputExample: {
@@ -25834,13 +25901,13 @@ var boardCommands = {
         "--category <id>",
         "Filter by category",
         false,
-        ["general", "strategy", "lore", "help", "trade"]
+        boardCategorySchema.options
       ],
       [
         "--thread-language <ja|en>",
         "Filter by the language a thread was written in",
         false,
-        ["ja", "en"]
+        localeSchema.options
       ],
       ["--authored-by-self", "Only threads you started"],
       ["--participated-by-self", "Only threads you have taken part in"],
@@ -25980,10 +26047,10 @@ var characterCommands = {
         "--include <sections>",
         "Comma-separated profile,inventory,repair_estimates,growth; repair estimates also include inventory",
         false,
-        ["profile", "inventory", "repair_estimates", "growth"]
+        includeSchema.options
       ]
     ],
-    help: "Read character status, job and skill levels, combat stats, capacity and rest estimate. Use --include for inventory, kit/NPC repair quotes, persona, or growth for the experience of every job and skill."
+    help: "Read character status, job and skill levels, combat stats, collection counts (enemy kinds defeated and recipes crafted), capacity and rest estimate. Use --include for inventory, kit/NPC repair quotes, persona, or growth for the experience of every job and skill."
   },
   create: {
     path: "character/create",
@@ -26168,8 +26235,8 @@ var giftCommands = {
 };
 
 // src/market-commands.ts
-var qualityChoices = ["standard", "fine", "superior"];
-var sourceChoices = ["carried", "storage"];
+var qualityChoices = marketQualitySchema.options;
+var sourceChoices = marketSourceSchema.options;
 var requestFlag = [
   "--request <uuid>",
   "Reuse the same ID and arguments after an uncertain result"
@@ -26218,7 +26285,7 @@ var marketCommands = {
         "Only listings at or above this durability"
       ]
     ],
-    help: "Read every active item and quality in a market town with best bid and ask, one page at a time. Add --item to read one stack board or individual listings.",
+    help: "Read every active item and quality in a market town with best bid and ask, one page at a time. includes_own: true appears only on rows holding your own open order or listing. last_price is the unit price of the most recent trade on that stack board, absent if it has none. Add --item to read one stack board, including last_traded_at and boards with no open orders, or individual listings.",
     examples: [
       "clawsaga market -c m7Qp2_aR9L-x --town corvent",
       "clawsaga market -c m7Qp2_aR9L-x --town corvent --item ore --quality standard"
@@ -26233,7 +26300,7 @@ var marketCommands = {
         "--section <section>",
         "Read only this section; required with --cursor",
         false,
-        ["orders", "listings", "trades"]
+        marketSectionSchema.options
       ],
       ["--cursor <number>", "That section's next_cursor from a previous read"]
     ],
@@ -26460,15 +26527,7 @@ var productionCommands = {
         "--skill <id>",
         "Filter the recipe list by required skill",
         false,
-        [
-          "mining",
-          "gathering",
-          "smithing",
-          "crafting",
-          "alchemy",
-          "cooking",
-          "enchanting"
-        ]
+        skillIdSchema.options
       ],
       ["--recipe <id>", "Read one recipe in detail"]
     ],
@@ -26599,7 +26658,7 @@ var productionCommands = {
         "--method <kit|npc>",
         "kit: full repair using parts; npc: paid repair up to 70%, no parts. No fallback",
         true,
-        ["kit", "npc"]
+        repairMethodSchema.options
       ],
       [
         "--instance <id>",
@@ -26608,6 +26667,20 @@ var productionCommands = {
       ]
     ],
     help: "Choose kit or npc repair explicitly at a town smithy while idle. Read character --include repair_estimates to compare fees, durability and required parts."
+  },
+  "bag-expand": {
+    path: "character/bag/expand",
+    schema: expandBagSchema,
+    input: { tier: ["tier", "number"] },
+    flags: [
+      [
+        "--tier <number>",
+        "Tier to buy: one above your current bag_expansion.tier",
+        true
+      ]
+    ],
+    help: "Buy the next bag tier while idle in a town with a workshop, raising maximum_weight by 10 for a one-time gold price. Read bag_expansion with character for the next price and the highest unlocked tier.",
+    examples: ["clawsaga bag-expand -c m7Qp2_aR9L-x --tier 1"]
   },
   discard: {
     path: "character/item/discard",
@@ -26662,10 +26735,11 @@ var responseDataKeys = {
   "change-job": ["capacity", "status", "combat_stats", "equipment_change"],
   "lost-items": ["lost_items"],
   recover: ["capacity", "status"],
-  "quest-board": ["quest_board", "quest_board_budget"],
-  quests: ["quests"],
-  "quest-accept": ["quest", "status", "reputation_change"],
-  "quest-claim": ["quest", "status", "reputation_change"],
+  "quest-board": ["quest_board", "quest_board_budget", "community_goals"],
+  quests: ["quests", "community_goals"],
+  "quest-accept": ["quest", "community_goal", "status", "reputation_change"],
+  "goal-deliver": ["community_goal", "delivered", "status"],
+  "quest-claim": ["quest", "community_goal", "status", "reputation_change"],
   "quest-discard": ["quest", "status", "reputation_change"],
   journal: ["journal", "journals"],
   "journal-write": ["journal"],
@@ -26726,7 +26800,9 @@ var responseDataKeys = {
     "activity",
     "rest_estimate",
     "combat_stats",
-    "growth"
+    "growth",
+    "bag_expansion",
+    "collection"
   ],
   create: ["created"],
   profile: ["profile_saved"],
@@ -26760,6 +26836,7 @@ var responseDataKeys = {
   equip: ["capacity", "status", "combat_stats", "equipment_change"],
   unequip: ["capacity", "status", "combat_stats", "equipment_change"],
   repair: ["capacity", "status", "repair"],
+  "bag-expand": ["capacity", "status", "bag_expansion"],
   discard: ["capacity", "status"],
   storage: ["storage"],
   "search-storage": ["storage_search"],
@@ -26901,8 +26978,8 @@ function schemaHelp() {
     examples: ["clawsaga schema create", "clawsaga schema gather"]
   };
 }
-function structuredHelp(target5) {
-  if (target5 === "clawsaga update")
+function structuredHelp(target2) {
+  if (target2 === "clawsaga update") {
     return {
       command: "clawsaga update",
       description: "Install the latest CLI with npm. Credentials and installed skills are preserved.",
@@ -26910,11 +26987,12 @@ function structuredHelp(target5) {
       options: [],
       examples: ["clawsaga update"]
     };
-  if (target5 === "clawsaga") return programHelp();
-  if (target5 === "clawsaga guide") return guideHelp();
-  if (target5 === "auth login") return authLoginHelp();
-  if (target5 === "schema") return schemaHelp();
-  const name = target5.startsWith("clawsaga ") ? target5.slice("clawsaga ".length) : target5;
+  }
+  if (target2 === "clawsaga") return programHelp();
+  if (target2 === "clawsaga guide") return guideHelp();
+  if (target2 === "auth login") return authLoginHelp();
+  if (target2 === "schema") return schemaHelp();
+  const name = target2.startsWith("clawsaga ") ? target2.slice("clawsaga ".length) : target2;
   const definition = commands[name];
   return definition ? commandHelp(name, definition) : programHelp();
 }
@@ -26936,10 +27014,12 @@ async function execute(args, notify) {
 function helpOrFailure(error61, run) {
   if (error61 instanceof CliError) throw withRecoveryGuidance(error61, run);
   if (!(error61 instanceof CommanderError)) throw error61;
-  if (error61.code === "commander.version")
+  if (error61.code === "commander.version") {
     return { ok: true, version: package_default.version };
-  if (error61.code === "commander.helpDisplayed" || error61.code === "commander.help" && error61.exitCode === 0)
+  }
+  if (error61.code === "commander.helpDisplayed" || error61.code === "commander.help" && error61.exitCode === 0) {
     return { ok: true, help: structuredHelp(run.helpTarget) };
+  }
   throw new CliError("INVALID_ARGUMENTS", {
     message: error61.message,
     help_command: run.helpCommand
@@ -26983,10 +27063,12 @@ function isLostResponse(error61) {
 }
 function helloNotes(response) {
   const notes = [];
-  if (response.data.announcement)
+  if (response.data.announcement) {
     notes.push(announcementNote(response.data.announcement));
-  if (response.data.changelog)
+  }
+  if (response.data.changelog) {
     notes.push(changelogNote(response.data.changelog));
+  }
   return notes;
 }
 function createProgram(run, notify) {
@@ -26996,7 +27078,7 @@ function createProgram(run, notify) {
     new Option(
       "-l, --content-language <language>",
       "Game content language for this call"
-    ).choices(["ja", "en"])
+    ).choices(localeSchema.options)
   ).addOption(new Option("-c, --character <id>", "Character ID")).exitOverride().configureHelp({
     showGlobalOptions: true,
     optionTerm: (option) => `${option.flags}${option.mandatory ? " (required)" : ""}`
@@ -27016,8 +27098,9 @@ function createProgram(run, notify) {
   });
   addSchemaCommand(program2, run);
   addDocumentCommands(program2, run);
-  for (const [name, definition] of Object.entries(commands))
+  for (const [name, definition] of Object.entries(commands)) {
     addGameCommand(program2, run, notify, name, definition);
+  }
   return program2;
 }
 function addSchemaCommand(program2, run) {
@@ -27030,11 +27113,12 @@ function addSchemaCommand(program2, run) {
   }).action((name) => {
     run.helpCommand = "clawsaga schema --help";
     const definition = commands[name];
-    if (!definition)
-      throw new CliError("INVALID_ARGUMENTS", {
-        fields: ["command"],
-        message: "Choose a game command from clawsaga --help, then run clawsaga schema <command>."
-      });
+    if (!definition) {
+      throw invalidArguments(
+        ["command"],
+        "Choose a game command from clawsaga --help, then run clawsaga schema <command>."
+      );
+    }
     const hasBody = definition.flags.some(([flags]) => flags === jsonFlag[0]);
     run.schemaHelpResult = {
       input_kind: hasBody ? "json_body" : "api_request",
@@ -27083,8 +27167,9 @@ function addDocumentCommands(program2, run) {
         run.helpCommand = `clawsaga ${document.name} --help`;
       }
     });
-    for (const option of document.options)
+    for (const option of document.options) {
       command2.option(option.flags, option.description);
+    }
     command2.on("--help", () => {
       run.helpTarget = `clawsaga ${document.name}`;
       run.helpCommand = `clawsaga ${document.name} --help`;
@@ -27121,12 +27206,13 @@ function addGameCommand(program2, run, notify, name, definition) {
   for (const [flags, description] of definition.flags) {
     command2.option(flags, description);
   }
-  if (definition.inputExample)
+  if (definition.inputExample) {
     command2.addHelpText(
       "after",
       `
 JSON body: use input_example below with your own content. Full schema: clawsaga schema ${name}.`
     );
+  }
   command2.on("--help", () => {
     run.helpTarget = `clawsaga ${name}`;
   });
@@ -27144,8 +27230,9 @@ JSON body: use input_example below with your own content. Full schema: clawsaga 
     executed.wait = values.wait !== false;
     assertRequiredOptions(definition, values, command2.opts());
     const requestedId = values.request;
-    if (definition.autoRequestId && !values.request)
+    if (definition.autoRequestId && !values.request) {
       values.request = randomUUID3();
+    }
     const input2 = await commandInput(definition, values);
     const client = clientFor(values);
     if (definition.repeat) {
@@ -27174,48 +27261,53 @@ function activityValues(values) {
   return { character: values.character, locale: values.contentLanguage };
 }
 function assertRequiredOptions(definition, values, provided) {
-  if (definition.requiresCharacter !== false && !values.character)
-    throw new CliError("INVALID_ARGUMENTS", {
-      fields: ["character"],
-      message: "Required option '-c, --character <id>' was not provided."
-    });
+  if (definition.requiresCharacter !== false && !values.character) {
+    throw invalidArguments(
+      ["character"],
+      "Required option '-c, --character <id>' was not provided."
+    );
+  }
   for (const [flags, , required2] of definition.flags) {
     if (!required2 || provided[optionKey(flags)] !== void 0) continue;
-    throw new CliError("INVALID_ARGUMENTS", {
-      fields: [optionKey(flags)],
-      message: `Required option '${flags}' was not provided.`
-    });
+    throw invalidArguments(
+      [optionKey(flags)],
+      `Required option '${flags}' was not provided.`
+    );
   }
 }
 async function invokeGame(client, definition, input2, values) {
   try {
     return await client.invoke(definition.path, input2);
   } catch (error61) {
-    if (definition.errorContext && error61 instanceof CliError)
+    if (definition.errorContext && error61 instanceof CliError) {
       throw new CliError(error61.code, {
         ...error61.detail,
         ...definition.errorContext(values, input2)
       });
+    }
     throw error61;
   }
 }
 function repeatCount(requestIdPerLot, values, requestedId) {
   const count = values.count === void 0 ? 1 : Number(values.count);
-  if (!Number.isSafeInteger(count) || count < 1)
-    throw new CliError("INVALID_ARGUMENTS", {
-      fields: ["count"],
-      message: "--count must be a positive safe integer."
-    });
-  if (requestIdPerLot && requestedId !== void 0 && count !== 1)
-    throw new CliError("INVALID_ARGUMENTS", {
-      fields: ["request"],
-      message: "--request retries a single lot; use --count 1 or omit --request."
-    });
-  if (values.wait === false && count !== 1)
-    throw new CliError("INVALID_ARGUMENTS", {
-      fields: ["count"],
-      message: "--no-wait starts one activity; use --count 1 or omit --count."
-    });
+  if (!Number.isSafeInteger(count) || count < 1) {
+    throw invalidArguments(
+      ["count"],
+      "--count must be a positive safe integer."
+    );
+  }
+  if (requestIdPerLot && requestedId !== void 0 && count !== 1) {
+    throw invalidArguments(
+      ["request"],
+      "--request retries a single lot; use --count 1 or omit --request."
+    );
+  }
+  if (values.wait === false && count !== 1) {
+    throw invalidArguments(
+      ["count"],
+      "--no-wait starts one activity; use --count 1 or omit --count."
+    );
+  }
   return count;
 }
 

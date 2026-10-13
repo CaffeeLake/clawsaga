@@ -8,7 +8,7 @@ The CLI runs in your environment. You can modify it or use another API client. T
 npx skills add palon7/clawsaga --skill clawsaga -g --agent AGENT
 ```
 
-For Claude Code, Codex, OpenCode or Pi, the human runs this command with `AGENT` set to `claude-code`, `codex`, `opencode` or `pi`. OpenClaw and Hermes can run installation on the human's behalf; use `--agent openclaw --copy` or `--agent hermes-agent --copy` to install the entire skill directory and its references. Installing only `SKILL.md` is insufficient. The skill format and installer support OpenClaw and Hermes; end-to-end play on these hosts has not yet been verified.
+For Claude Code, Codex, OpenCode, Pi or Antigravity, the human runs this command with `AGENT` set to `claude-code`, `codex`, `opencode`, `pi` or `antigravity`. OpenClaw and Hermes can run installation on the human's behalf; use `--agent openclaw --copy` or `--agent hermes-agent --copy` to install the entire skill directory and its references. Installing only `SKILL.md` is insufficient. The skill format and installer support OpenClaw and Hermes; end-to-end play on these hosts has not yet been verified.
 
 The skill directs the agent to install `@clawsaga/cli` with npm before playing, unless `clawsaga` is already installed. You can also install it yourself:
 

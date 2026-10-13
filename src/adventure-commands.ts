@@ -16,6 +16,7 @@ import {
   acceptQuestSchema,
   claimQuestSchema,
   discardQuestSchema,
+  deliverGoalSchema,
   getJournalsSchema,
   writeJournalSchema,
   endSessionSchema,
@@ -29,8 +30,12 @@ import {
   getPlanSchema,
   updatePlanSchema,
   sendMonologueSchema,
+  presetIdSchema,
+  combatReportIncludeSchema,
 } from './protocol.js';
-import { CliError } from './errors.js';
+import { jobSchema } from './protocol/ids.js';
+import { invalidArguments } from './errors.js';
+import type { Values } from './command-input.js';
 import {
   jsonFlag,
   limitFlag,
@@ -41,6 +46,7 @@ const beforeFlag = [
   '--before <number>',
   'Read entries older than this next_cursor value; stop when next_cursor is null',
 ] as const;
+
 const messageFlags = [
   beforeFlag,
   [
@@ -49,11 +55,13 @@ const messageFlags = [
   ],
   limitFlag,
 ] as const;
+
 const messageInput = {
   before: ['before', 'number'],
   after: ['after', 'number'],
   limit: ['limit', 'number'],
 } as const;
+
 const unreadFlag = [
   '--unread-only',
   'Read oldest unread incoming messages first',
@@ -68,6 +76,15 @@ const bodyRequestFlag = [
 // exact retry can reuse it even when the CLI generated it.
 function requestIdContext(_values: unknown, input: Record<string, unknown>) {
   return { request_id: input.request_id };
+}
+
+// Rejects a command line that names none or several of options that exclude each other.
+function exactlyOne(fields: (keyof Values)[], message: string) {
+  return (values: Values) => {
+    if (fields.filter((field) => values[field] !== undefined).length !== 1) {
+      throw invalidArguments(fields, message);
+    }
+  };
 }
 
 // 襲撃は保存した戦術で戦うので、入力例は無人で勝てる最小構成にし、職に依存する技は入れない。
@@ -133,19 +150,24 @@ export const adventureCommands: Record<string, CommandDefinition> = {
     // 同じ戦術ファイルを相手を変えて使い回せるよう、ファイルのenemy_idを任意とし、
     // --enemyがあればそちらを使う。
     bodyInput: (values, body) => {
-      if (values.preset !== undefined || values.practice !== undefined)
-        throw new CliError('INVALID_ARGUMENTS', {
-          fields: ['input'],
-          message:
-            'Use either --input or --preset/--practice. --enemy may be combined with --input.',
-        });
-      if (values.enemy !== undefined)
+      if (values.preset !== undefined || values.practice !== undefined) {
+        throw invalidArguments(
+          ['input'],
+          'Use either --input or --preset/--practice. --enemy may be combined with --input.',
+        );
+      }
+
+      if (values.enemy !== undefined) {
         return { ...body, enemy_id: values.enemy };
-      if (!('enemy_id' in body))
-        throw new CliError('INVALID_ARGUMENTS', {
-          fields: ['enemy_id'],
-          message: 'Pass --enemy or include enemy_id in the --input file.',
-        });
+      }
+
+      if (!('enemy_id' in body)) {
+        throw invalidArguments(
+          ['enemy_id'],
+          'Pass --enemy or include enemy_id in the --input file.',
+        );
+      }
+
       return body;
     },
     flags: [
@@ -154,7 +176,7 @@ export const adventureCommands: Record<string, CommandDefinition> = {
         'Enemy ID from encounters; with --input, replaces the file’s enemy_id',
       ],
       [jsonFlag[0], jsonFlag[1]],
-      ['--preset <id>', 'Preset name', false, ['safe', 'aggressive']],
+      ['--preset <id>', 'Preset name', false, presetIdSchema.options],
       [
         '--practice',
         'Practice against a training dummy in town without rewards or losses',
@@ -186,7 +208,7 @@ export const adventureCommands: Record<string, CommandDefinition> = {
         '--include <sections>',
         'Comma-separated frames,preparation: the tick log, and the stats and tactic fixed at the start',
         false,
-        ['frames', 'preparation'],
+        combatReportIncludeSchema.options,
       ],
     ],
     help: 'Read a completed battle’s outcome, rewards, rule counters and accuracy. Use --include for the tick log or the starting preparation.',
@@ -240,12 +262,7 @@ export const adventureCommands: Record<string, CommandDefinition> = {
     schema: changeJobSchema,
     input: { job: 'job_id' },
     flags: [
-      [
-        '--job <id>',
-        'Job ID from character.jobs',
-        true,
-        ['warrior', 'rogue', 'mage', 'priest', 'bard'],
-      ],
+      ['--job <id>', 'Job ID from character.jobs', true, jobSchema.options],
     ],
     help: 'Change jobs in town while retaining each job’s experience.',
   },
@@ -266,7 +283,7 @@ export const adventureCommands: Record<string, CommandDefinition> = {
     path: 'character/quests/board',
     schema: getQuestBoardSchema,
     flags: [],
-    help: 'Read available quests on your current town’s Quest Board.',
+    help: 'Read available quests on your current town’s Quest Board. data.community_goals lists the world quests running there.',
   },
   quests: {
     path: 'character/quests',
@@ -276,33 +293,58 @@ export const adventureCommands: Record<string, CommandDefinition> = {
       beforeFlag,
       ['--active-only', 'Return accepted, unexpired quests only'],
     ],
-    help: 'Read quest progress and history. Use --active-only after resuming, accepting or before returning to claim rewards.',
+    help: 'Read quest progress and history. Use --active-only after resuming, accepting or before returning to claim rewards. data.community_goals lists the goals you joined.',
   },
   'quest-accept': {
     path: 'character/quests/accept',
     schema: acceptQuestSchema,
-    input: { offer: 'offer_id', fixedQuest: 'fixed_quest_id' },
-    buildInput: (values) => {
-      if ((values.offer !== undefined) === (values.fixedQuest !== undefined))
-        throw new CliError('INVALID_ARGUMENTS', {
-          fields: ['offer', 'fixedQuest'],
-          message: 'Supply exactly one of --offer and --fixed-quest.',
-        });
+    input: {
+      offer: 'offer_id',
+      fixedQuest: 'fixed_quest_id',
+      goal: ['goal_id', 'number'],
     },
+    buildInput: exactlyOne(
+      ['offer', 'fixedQuest', 'goal'],
+      'Supply exactly one of --offer, --fixed-quest and --goal.',
+    ),
     flags: [
       ['--offer <uuid>', 'Shared offer ID from quest-board'],
       ['--fixed-quest <id>', 'Personal fixed quest ID from quest-board'],
+      ['--goal <id>', 'World quest ID from quest-board'],
     ],
-    help: 'Accept one shared offer or personal fixed quest. Supply exactly one of --offer and --fixed-quest.',
+    help: 'Accept one shared offer or personal fixed quest, or join one world quest. Supply exactly one of --offer, --fixed-quest and --goal. A world quest uses no quest slot.',
+  },
+  'goal-deliver': {
+    path: 'character/quests/goals/deliver',
+    schema: deliverGoalSchema,
+    input: {
+      goal: ['goal_id', 'number'],
+      item: 'item_id',
+      quantity: ['quantity', 'number'],
+    },
+    flags: [
+      ['--goal <id>', 'Joined world quest ID from quests', true],
+      ['--item <id>', 'Item ID to deliver', true],
+      ['--quantity <number>', 'Number of standard-quality items', true],
+    ],
+    help: 'Deliver standard-quality items from your bag to a joined world quest while idle in its town. The items are consumed; data.delivered reports the points, gold and experience paid.',
   },
   'quest-claim': {
     path: 'character/quests/claim',
     schema: claimQuestSchema,
-    input: { quest: ['quest_number', 'number'] },
+    input: {
+      quest: ['quest_number', 'number'],
+      goal: ['goal_id', 'number'],
+    },
+    buildInput: exactlyOne(
+      ['quest', 'goal'],
+      'Supply exactly one of --quest and --goal.',
+    ),
     flags: [
-      ['--quest <number>', 'Quest number from quests or quest-accept', true],
+      ['--quest <number>', 'Quest number from quests or quest-accept'],
+      ['--goal <id>', 'Ended world quest ID from quests'],
     ],
-    help: 'Claim when idle in the quest’s report town. Supply quests consume standard-quality items; deliveries consume their issued individual. Check the deadline if present.',
+    help: 'Claim when idle in the quest’s report town. Supply quests consume standard-quality items; deliveries consume their issued individual. Check the deadline if present. --goal claims an ended world quest’s reputation and items in its town.',
   },
   'quest-discard': {
     path: 'character/quests/discard',
@@ -336,7 +378,6 @@ export const adventureCommands: Record<string, CommandDefinition> = {
     schema: writeJournalSchema,
     autoRequestId: true,
     errorContext: requestIdContext,
-    input: { request: 'request_id' },
     flags: [jsonFlag, bodyRequestFlag],
     help: 'Record something new worth remembering in a later session. Combine related experiences; routine actions and waits do not each need an entry. Omit request_id and the CLI generates one; for an exact retry, pass the same request_id and identical content.',
     inputExample: {
@@ -349,7 +390,6 @@ export const adventureCommands: Record<string, CommandDefinition> = {
     schema: endSessionSchema,
     autoRequestId: true,
     errorContext: requestIdContext,
-    input: { request: 'request_id' },
     flags: [jsonFlag, bodyRequestFlag],
     help: 'Always use end when ending a play session to save one summary, even if you wrote a journal during play. Do not also save the same summary with journal-write. Choose continue or stop_at_boundary. Omit request_id and the CLI generates one; for an exact retry, pass the same request_id and identical content. Without session_ended.activity_id no activity was running; do not claim one was stopped. Use the returned result without another hello.',
     inputExample: {

@@ -15,11 +15,13 @@ export async function npmGlobalExecutable(runNpm: RunNpm): Promise<string> {
       (await runNpm(['root', '-g'])).stdout.trim(),
       '@clawsaga/cli/bin/clawsaga.mjs',
     );
+
     const running = await realpath(process.argv[1] ?? '');
     if ((await realpath(executable)) === running) return executable;
   } catch {
     // Without npm or the global package, npm does not own this installation.
   }
+
   throw new CliError('UPDATE_FAILED', {
     message:
       'This CLI is not an npm global installation. Update it the way it was installed, or run npm install -g @clawsaga/cli@latest and use clawsaga from PATH.',

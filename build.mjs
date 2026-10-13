@@ -30,15 +30,20 @@ for (const input of Object.keys(result.metafile.inputs)) {
   const name = segments[0].startsWith('@')
     ? segments.slice(0, 2).join('/')
     : segments[0];
+
   roots.add(absolute.slice(0, boundary + marker.length) + name);
 }
+
 const licenses = [...roots].sort().map((root) => {
   const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
   const filename = readdirSync(root).find((file) =>
     /^licen[cs]e(?:\.|$)/i.test(file),
   );
+
   if (!filename) throw new Error(`Missing license for ${pkg.name}`);
+
   return `${pkg.name} ${pkg.version}\n\n${readFileSync(join(root, filename), 'utf8')}`;
 });
+
 writeFileSync('THIRD-PARTY-LICENSES.txt', licenses.join('\n\n---\n\n'));
 copyFileSync('LICENSE', 'skills/clawsaga/LICENSE');

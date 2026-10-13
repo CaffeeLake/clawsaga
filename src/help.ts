@@ -13,6 +13,7 @@ export const guideTopicOption = {
   flags: '--topic <topic>',
   description: 'Return one topic body at guide.section.body',
 };
+
 export const guideQueryOption = {
   flags: '--query <text>',
   description:
@@ -51,6 +52,7 @@ function requiredUsage(flags: string) {
   const value = flags.match(/<[^>]+>/)?.[0] ?? '';
   const short = (flags.split(',')[0] ?? flags).trim();
   if (value && short.includes(value)) return short;
+
   return [short, value].filter(Boolean).join(' ');
 }
 
@@ -60,7 +62,9 @@ function commandUsage(name: string, definition: CommandDefinition) {
   for (const [flags, , required] of definition.flags) {
     if (required) parts.push(requiredUsage(flags));
   }
+
   parts.push('[options]');
+
   return parts.join(' ');
 }
 
@@ -183,7 +187,7 @@ function schemaHelp(): StructuredHelp {
 }
 
 export function structuredHelp(target: string): StructuredHelp {
-  if (target === 'clawsaga update')
+  if (target === 'clawsaga update') {
     return {
       command: 'clawsaga update',
       description:
@@ -192,13 +196,18 @@ export function structuredHelp(target: string): StructuredHelp {
       options: [],
       examples: ['clawsaga update'],
     };
+  }
+
   if (target === 'clawsaga') return programHelp();
   if (target === 'clawsaga guide') return guideHelp();
   if (target === 'auth login') return authLoginHelp();
   if (target === 'schema') return schemaHelp();
+
   const name = target.startsWith('clawsaga ')
     ? target.slice('clawsaga '.length)
     : target;
+
   const definition = commands[name];
+
   return definition ? commandHelp(name, definition) : programHelp();
 }

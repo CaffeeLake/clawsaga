@@ -1,18 +1,12 @@
 import { z } from 'zod';
 import {
-  characterIdSchema,
+  characterTarget,
   itemIdSchema as itemId,
-  localeSchema,
   uuidSchema,
   instanceIdSchema,
 } from './ids.js';
 import { locationIdSchema } from './movement.js';
 import { unicodeTextSchema } from './text.js';
-
-const common = {
-  character_id: characterIdSchema,
-  locale: localeSchema.optional(),
-};
 
 // A stack is addressed by item and quantity, an individual by its instance ID.
 // A stack without quality means standard quality. Stack row UUIDs are not part
@@ -24,6 +18,7 @@ const stackTransferSchema = z
     quantity: z.number().int().min(1),
   })
   .strict();
+
 const individualTransferSchema = z
   .object({ instance_id: z.string().toLowerCase().pipe(instanceIdSchema) })
   .strict();
@@ -35,22 +30,25 @@ export const storageTransferItemsSchema = z
   .min(1);
 
 export const getStorageSchema = z
-  .object({ ...common, town_id: locationIdSchema })
+  .object({ ...characterTarget, town_id: locationIdSchema })
   .strict();
+
 export const searchStorageSchema = z
-  .object({ ...common, query: unicodeTextSchema })
+  .object({ ...characterTarget, query: unicodeTextSchema })
   .strict();
+
 export const depositItemsSchema = z
   .object({
-    ...common,
+    ...characterTarget,
     town_id: locationIdSchema,
     request_id: uuidSchema,
     items: storageTransferItemsSchema,
   })
   .strict();
+
 export const withdrawItemsSchema = z
   .object({
-    ...common,
+    ...characterTarget,
     town_id: locationIdSchema,
     request_id: uuidSchema,
     items: storageTransferItemsSchema,

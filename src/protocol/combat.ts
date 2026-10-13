@@ -2,17 +2,13 @@ import { z } from 'zod';
 import {
   itemIdSchema,
   jobSchema,
-  localeSchema,
-  characterIdSchema,
+  characterTarget,
   activityIdSchema,
   dropIdSchema,
 } from './ids.js';
 
-const target = {
-  character_id: characterIdSchema,
-  locale: localeSchema.optional(),
-};
 export const combatIdSchema = z.string().regex(/^[a-z][a-z0-9_]{0,63}$/);
+
 export const damageTypeSchema = z.enum([
   'physical',
   'fire',
@@ -20,6 +16,7 @@ export const damageTypeSchema = z.enum([
   'lightning',
   'holy',
 ]);
+
 export const combatStatusSchema = z.enum([
   'poison',
   'guard',
@@ -98,6 +95,7 @@ export const tacticConditionSchema = z.discriminatedUnion('kind', [
     .strict()
     .describe('Matches when the enemy has no remaining poison ticks.'),
 ]);
+
 export const tacticActionSchema = z.discriminatedUnion('kind', [
   z
     .object({ kind: z.enum(['attack', 'defend', 'potion', 'retreat']) })
@@ -112,6 +110,7 @@ export const tacticActionSchema = z.discriminatedUnion('kind', [
       'Uses the ability when it is unlocked, off cooldown, affordable in MP and its effect is currently applicable.',
     ),
 ]);
+
 export const tacticSchema = z
   .object({
     rules: z
@@ -141,27 +140,34 @@ export const tacticSchema = z
   })
   .strict()
   .meta({ id: 'Tactic' });
+
 export type Tactic = z.infer<typeof tacticSchema>;
+
 export const presetIdSchema = z.enum(['safe', 'aggressive']);
-export const getTacticsSchema = z.object(target).strict();
+export const getTacticsSchema = z.object(characterTarget).strict();
+
 export const setTacticsSchema = z
-  .object({ ...target, tactic: tacticSchema })
+  .object({ ...characterTarget, tactic: tacticSchema })
   .strict();
+
 export const validateTacticsSchema = setTacticsSchema;
+
 export const startCombatSchema = z
   .object({
-    ...target,
+    ...characterTarget,
     enemy_id: combatIdSchema,
     preset: presetIdSchema.optional(),
     tactic: tacticSchema.optional(),
     practice: z.boolean().optional(),
   })
   .strict();
-export const restSchema = z.object(target).strict();
+
+export const restSchema = z.object(characterTarget).strict();
 export const stayAtInnSchema = restSchema;
+
 export const useItemSchema = z
   .object({
-    ...target,
+    ...characterTarget,
     item_id: itemIdSchema,
     count: z.number().int().positive().optional().meta({
       description:
@@ -169,19 +175,24 @@ export const useItemSchema = z
     }),
   })
   .strict();
+
 export const changeJobSchema = z
-  .object({ ...target, job_id: jobSchema })
+  .object({ ...characterTarget, job_id: jobSchema })
   .strict();
+
 export const combatReportIncludeSchema = z.enum(['frames', 'preparation']);
+
 export const getCombatReportSchema = z
   .object({
-    ...target,
+    ...characterTarget,
     activity_id: activityIdSchema,
     include: z.array(combatReportIncludeSchema).optional(),
   })
   .strict();
-export const getEncountersSchema = z.object(target).strict();
-export const getLostItemsSchema = z.object(target).strict();
+
+export const getEncountersSchema = z.object(characterTarget).strict();
+export const getLostItemsSchema = z.object(characterTarget).strict();
+
 export const recoverLostItemsSchema = z
-  .object({ ...target, drop_id: dropIdSchema })
+  .object({ ...characterTarget, drop_id: dropIdSchema })
   .strict();

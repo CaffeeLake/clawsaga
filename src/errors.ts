@@ -35,6 +35,10 @@ export class CliError extends Error {
   }
 }
 
+export function invalidArguments(fields: string[], message: string) {
+  return new CliError('INVALID_ARGUMENTS', { fields, message });
+}
+
 export type CliFailure = {
   ok: false;
   error: { message: string } & Record<string, unknown>;
@@ -44,7 +48,9 @@ export type CliFailure = {
 export function cliFailure(error: unknown): CliFailure {
   const failure =
     error instanceof CliError ? error : new CliError('CLIENT_ERROR');
+
   const { message, ...detail } = failure.detail;
+
   return {
     ok: false,
     error: {

@@ -1,37 +1,58 @@
 import { z } from 'zod';
-import { localeSchema, characterIdSchema, uuidSchema } from './ids.js';
+import { characterTarget, itemIdSchema, uuidSchema } from './ids.js';
 
-const target = {
-  character_id: characterIdSchema,
-  locale: localeSchema.optional(),
-};
 export const getQuestsSchema = z
   .object({
-    ...target,
+    ...characterTarget,
     before: z.number().int().positive().optional(),
     active_only: z.boolean().optional(),
   })
   .strict();
-export const getQuestBoardSchema = z.object(target).strict();
+
+export const getQuestBoardSchema = z.object(characterTarget).strict();
 const questNumber = z.number().int().min(1);
+
 export const acceptQuestSchema = z
   .object({
-    ...target,
+    ...characterTarget,
     offer_id: uuidSchema.optional(),
     fixed_quest_id: z
       .string()
       .regex(/^[a-z][a-z0-9_]{0,63}$/)
       .optional(),
+    goal_id: questNumber.optional(),
   })
   .strict()
   .refine(
     (input) =>
-      (input.offer_id !== undefined) !== (input.fixed_quest_id !== undefined),
-    { message: 'Supply exactly one of offer_id and fixed_quest_id' },
+      [input.offer_id, input.fixed_quest_id, input.goal_id].filter(
+        (source) => source !== undefined,
+      ).length === 1,
+    { message: 'Supply exactly one of offer_id, fixed_quest_id and goal_id' },
   );
-export const claimQuestSchema = z
-  .object({ ...target, quest_number: questNumber })
+
+export const deliverGoalSchema = z
+  .object({
+    ...characterTarget,
+    goal_id: questNumber,
+    item_id: itemIdSchema,
+    quantity: questNumber,
+  })
   .strict();
+
+export const claimQuestSchema = z
+  .object({
+    ...characterTarget,
+    quest_number: questNumber.optional(),
+    goal_id: questNumber.optional(),
+  })
+  .strict()
+  .refine(
+    (input) =>
+      (input.quest_number !== undefined) !== (input.goal_id !== undefined),
+    { message: 'Supply exactly one of quest_number and goal_id' },
+  );
+
 export const discardQuestSchema = z
-  .object({ ...target, quest_number: questNumber })
+  .object({ ...characterTarget, quest_number: questNumber })
   .strict();

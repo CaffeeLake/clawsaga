@@ -27,6 +27,7 @@ it('renders server hints with CLI command syntax, adds the invoked character and
     },
     { note: 'Changing job puts your previous weapon in the bag.' },
   ];
+
   expect(withRenderedHints({ ...response, hints }).hints).toEqual([
     { note: 'Run `hello -c m7Qp2_aR9L-x`.' },
     { note: 'Run `activity -a 7`.' },
@@ -66,9 +67,11 @@ it('renders hints from the result without another request', async () => {
       },
     ],
   };
+
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockResolvedValue(serverResponse);
+
   const result = await execute(
     [
       'buy',
@@ -83,6 +86,7 @@ it('renders hints from the result without another request', async () => {
     ],
     vi.fn(),
   );
+
   expect(result).toMatchObject({
     hints: [
       {
@@ -183,11 +187,13 @@ it('describes a --no-wait finished result as a past result, even while another a
       },
     },
   };
+
   const stored = [
     {
       note: 'This rest activity has already finished. No new activity was started.',
     },
   ];
+
   expect(
     withRenderedHints(finished, 'HintHero0000', { wait: false }).hints,
   ).toEqual(stored);
@@ -286,6 +292,7 @@ it('keeps a partial repetition and its payload while noting the confirmed count'
       stopped_reason: 'ambush',
     },
   } as unknown as AgentGameResponse;
+
   const rendered = withRenderedHints(partial, 'HintHero0000');
   expect(rendered).toMatchObject({
     ok: false,

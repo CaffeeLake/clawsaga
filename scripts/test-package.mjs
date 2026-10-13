@@ -17,6 +17,7 @@ try {
       encoding: 'utf8',
     }),
   )[0];
+
   const prefix = join(temporary, 'prefix');
   execFileSync(
     'npm',
@@ -35,10 +36,12 @@ try {
     ],
     { cwd: temporary, stdio: 'pipe' },
   );
+
   const env = {
     ...process.env,
     PATH: `${join(prefix, 'bin')}${delimiter}${process.env.PATH}`,
   };
+
   const run = (...args) =>
     JSON.parse(
       execFileSync('clawsaga', args, {
@@ -47,6 +50,7 @@ try {
         encoding: 'utf8',
       }),
     );
+
   assert.deepEqual(run('--version'), { ok: true, version: pkg.version });
   assert.equal(run('--help').ok, true);
   console.log(

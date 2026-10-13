@@ -7,9 +7,11 @@ const common = {
   character_id: characterIdSchema.describe('The immutable Character ID.'),
   locale: localeSchema.optional(),
 };
+
 export const getMapSchema = z
   .object({ ...common, full: z.boolean().optional() })
   .strict();
+
 export const lookSchema = z
   .object({
     ...common,
@@ -17,12 +19,15 @@ export const lookSchema = z
     cursor: characterIdSchema.optional(),
   })
   .strict();
+
 export const getRouteSchema = z
   .object({ ...common, to: locationIdSchema })
   .strict();
+
 export const travelSchema = z
   .object({ ...common, to: locationIdSchema })
   .strict();
+
 export const rideCarriageSchema = travelSchema;
 export const getActivitySchema = z
   .object({

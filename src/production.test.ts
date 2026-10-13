@@ -63,6 +63,7 @@ function completed(
     },
   };
 }
+
 const args = ['gather', '-c', 'Maker0000000', '--item', 'herb'];
 
 it('accepts counts above five without sending the repetition count to the API', async () => {
@@ -71,6 +72,7 @@ it('accepts counts above five without sending the repetition count to the API', 
     .mockImplementation((path) =>
       Promise.resolve(path === 'character/activity' ? completed() : running()),
     );
+
   expect(await execute([...args, '--count', '100'], vi.fn())).toMatchObject({
     ok: true,
     repetition: {
@@ -94,6 +96,7 @@ it('rejects invalid counts before starting an activity', async () => {
       execute([...args, '--count', count], vi.fn()),
     ).rejects.toMatchObject({ code: 'INVALID_ARGUMENTS' });
   }
+
   expect(invoke).not.toHaveBeenCalled();
 });
 
@@ -104,6 +107,7 @@ it('waits for each accepted result before starting the next and stops on depleti
     .mockResolvedValueOnce(completed())
     .mockResolvedValueOnce(running())
     .mockResolvedValueOnce(completed('RESOURCE_DEPLETED'));
+
   const response = await execute([...args, '--count', '6'], vi.fn());
   expect(response).toMatchObject({
     ok: false,
@@ -120,6 +124,7 @@ it('waits for each accepted result before starting the next and stops on depleti
       stopped_reason: 'activity_stopped',
     },
   });
+
   expect(invoke.mock.calls.map((call) => call[0])).toEqual([
     'character/gather',
     'character/activity',
@@ -140,6 +145,7 @@ it('preserves three confirmed harvests out of ten on an uncertain later start wi
     .mockRejectedValueOnce(
       new CliError('NETWORK_ERROR', { outcome: 'unknown' }),
     );
+
   await expect(
     repeatActivity(
       new GameClient('https://example.com'),
@@ -159,6 +165,7 @@ it('preserves three confirmed harvests out of ten on an uncertain later start wi
       },
     },
   });
+
   expect(invoke).toHaveBeenCalledTimes(7);
 });
 
@@ -167,15 +174,20 @@ it('keeps the confirmed harvests but claims no output when the next start is not
     .mockResolvedValueOnce('test-token')
     .mockResolvedValueOnce('test-token')
     .mockRejectedValueOnce(new CliError('AUTH_REQUIRED'));
+
   const request = vi
     .fn<typeof fetch>()
     .mockResolvedValueOnce(Response.json(running()))
     .mockResolvedValueOnce(Response.json(completed()));
+
   vi.stubGlobal('fetch', request);
+
   const error = await execute([...args, '--count', '2'], vi.fn()).catch(
     (thrown: unknown) => thrown,
   );
+
   if (!(error instanceof CliError)) throw new Error('Expected a CliError');
+
   // 2回目の開始はトークン取得で止まり、ゲーム要求は送っていない。
   expect(error.code).toBe('AUTH_REQUIRED');
   expect(error.detail).toMatchObject({
@@ -187,6 +199,7 @@ it('keeps the confirmed harvests but claims no output when the next start is not
       stopped_reason: 'start_rejected',
     },
   });
+
   // 開始していない回を「成果が出たかもしれない」と案内しない。
   expect(error.detail).not.toHaveProperty('hint');
   expect(
@@ -206,6 +219,7 @@ it('keeps response diagnostics and the accepted activity when a repetition canno
         fields: ['data.activity'],
       }),
     );
+
   await expect(
     execute([...args, '--count', '3'], vi.fn()),
   ).rejects.toMatchObject({
@@ -235,14 +249,19 @@ it('keeps the confirmed output and server failure when a repetition wait fails',
     data: {},
     error: { message: 'The activity was not found.' },
   };
+
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockImplementation((path, body) => {
-      if (path === 'character/activity')
+      if (path === 'character/activity') {
         return Promise.resolve(bodies.length === 1 ? completedCraft() : failed);
+      }
+
       bodies.push(body as Record<string, unknown>);
+
       return Promise.resolve(runningCraft());
     });
+
   const result = await execute(
     [
       'craft',
@@ -257,6 +276,7 @@ it('keeps the confirmed output and server failure when a repetition wait fails',
     ],
     vi.fn(),
   );
+
   // 照会が失敗しただけなので、確定済みの成果とサーバー診断はそのまま残す。
   expect(result).toMatchObject({
     ok: false,
@@ -268,14 +288,17 @@ it('keeps the confirmed output and server failure when a repetition wait fails',
       stopped_reason: 'activity_failed',
     },
   });
+
   // 失敗した回は受付済みで結果が未確認なので、その旨を案内する。
   const notes = (result as { hints?: { note: string }[] }).hints?.map(
     (hint) => hint.note,
   );
+
   expect(notes).toHaveLength(1);
   expect(notes?.[0]).toContain('1 of 2 attempts completed');
   expect(notes?.[0]).toContain('The last attempt may also have succeeded');
   expect(notes?.[0]).toContain('Check your current or latest activity');
+
   expect(invoke).toHaveBeenCalledTimes(4);
 });
 
@@ -283,6 +306,7 @@ it('retains a generated purchase ID and payment arguments and reconciles by the 
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockRejectedValue(new CliError('NETWORK_ERROR', { outcome: 'unknown' }));
+
   const error = await execute(
     [
       'buy',
@@ -297,7 +321,9 @@ it('retains a generated purchase ID and payment arguments and reconciles by the 
     ],
     vi.fn(),
   ).catch((thrown: unknown) => thrown);
+
   if (!(error instanceof CliError)) throw new Error('Expected a CliError');
+
   expect(error.code).toBe('NETWORK_ERROR');
   expect(error.detail).toMatchObject({
     request_id: expect.any(String),
@@ -305,6 +331,7 @@ it('retains a generated purchase ID and payment arguments and reconciles by the 
     quantity: 5,
     max_payment: 10,
   });
+
   const hint = String(error.detail.hint);
   expect(hint).toContain('same arguments');
   expect(hint).toContain(`--request ${String(error.detail.request_id)}`);
@@ -320,6 +347,7 @@ it('sends a bulk purchase once without a payment cap', async () => {
     server_time: '2026-09-09T00:00:00.000Z',
     data: {},
   });
+
   await execute(
     [
       'buy',
@@ -332,6 +360,7 @@ it('sends a bulk purchase once without a payment cap', async () => {
     ],
     vi.fn(),
   );
+
   expect(invoke).toHaveBeenCalledTimes(1);
   expect(invoke.mock.calls[0]?.[1]).toMatchObject({
     character_id: 'Maker0000000',
@@ -346,6 +375,7 @@ it('keeps the quantity and omits an absent cap when a bulk purchase reply is los
   vi.spyOn(GameClient.prototype, 'invoke').mockRejectedValue(
     new CliError('NETWORK_ERROR', { outcome: 'unknown' }),
   );
+
   const error = await execute(
     [
       'buy',
@@ -358,7 +388,9 @@ it('keeps the quantity and omits an absent cap when a bulk purchase reply is los
     ],
     vi.fn(),
   ).catch((thrown: unknown) => thrown);
+
   if (!(error instanceof CliError)) throw new Error('Expected a CliError');
+
   expect(error.detail).toMatchObject({
     request_id: expect.any(String),
     item_id: 'healing_potion',
@@ -416,11 +448,15 @@ it('assigns a new request ID to each craft lot without sending the count', async
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockImplementation((path, body) => {
-      if (path === 'character/activity')
+      if (path === 'character/activity') {
         return Promise.resolve(completedCraft());
+      }
+
       bodies.push(body as Record<string, unknown>);
+
       return Promise.resolve(runningCraft());
     });
+
   const response = await execute(
     [
       'craft',
@@ -435,6 +471,7 @@ it('assigns a new request ID to each craft lot without sending the count', async
     ],
     vi.fn(),
   );
+
   expect(response).toMatchObject({
     ok: true,
     repetition: {
@@ -444,6 +481,7 @@ it('assigns a new request ID to each craft lot without sending the count', async
       stopped_reason: 'count_reached',
     },
   });
+
   expect(bodies).toHaveLength(3);
   expect(new Set(bodies.map((body) => body.request_id)).size).toBe(3);
   for (const body of bodies) {
@@ -454,6 +492,7 @@ it('assigns a new request ID to each craft lot without sending the count', async
     });
     expect(body).not.toHaveProperty('count');
   }
+
   expect(invoke).toHaveBeenCalledTimes(6);
 });
 
@@ -462,11 +501,15 @@ it('retries one craft lot with an explicit request ID and rejects a repeated cou
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockImplementation((path, body) => {
-      if (path === 'character/activity')
+      if (path === 'character/activity') {
         return Promise.resolve(completedCraft());
+      }
+
       bodies.push(body as Record<string, unknown>);
+
       return Promise.resolve(runningCraft());
     });
+
   const request_id = '33333333-3333-4333-8333-333333333333';
   await execute(
     [
@@ -482,7 +525,9 @@ it('retries one craft lot with an explicit request ID and rejects a repeated cou
     ],
     vi.fn(),
   );
+
   expect(bodies).toEqual([expect.objectContaining({ request_id })]);
+
   await expect(
     execute(
       [
@@ -501,6 +546,7 @@ it('retries one craft lot with an explicit request ID and rejects a repeated cou
       vi.fn(),
     ),
   ).rejects.toMatchObject({ code: 'INVALID_ARGUMENTS' });
+
   expect(bodies).toHaveLength(1);
   expect(invoke).toHaveBeenCalledTimes(2);
 });
@@ -558,10 +604,12 @@ it('answers a replayed craft from its stored result while a newer activity keeps
   const response = replayedCraftResult();
   response.data.activity = runningCraftActivity(77);
   response.next_poll_after_seconds = 30;
+
   expect(agentGameResponseSchema.safeParse(response).success).toBe(true);
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockResolvedValue(response);
+
   const replay = (requestId: string) =>
     execute(
       [
@@ -577,6 +625,7 @@ it('answers a replayed craft from its stored result while a newer activity keeps
       ],
       vi.fn(),
     );
+
   await expect(
     replay('88888888-8888-4888-8888-888888888888'),
   ).resolves.toMatchObject({
@@ -588,6 +637,7 @@ it('answers a replayed craft from its stored result while a newer activity keeps
       stopped_reason: 'count_reached',
     },
   });
+
   // The newer activity is not polled; the stored result answers this lot.
   expect(invoke.mock.calls.map(([path]) => path)).toEqual(['character/craft']);
 
@@ -596,6 +646,7 @@ it('answers a replayed craft from its stored result while a newer activity keeps
   stopped.data.activity = response.data.activity;
   stopped.next_poll_after_seconds = 30;
   invoke.mockClear().mockResolvedValue(stopped);
+
   await expect(
     replay('66666666-6666-4666-8666-666666666666'),
   ).resolves.toMatchObject({
@@ -617,6 +668,7 @@ it('reports the current craft lot request ID when its result is unknown', async 
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockRejectedValue(new CliError('NETWORK_ERROR'));
+
   await expect(
     execute(
       [
@@ -639,6 +691,7 @@ it('reports the current craft lot request ID when its result is unknown', async 
       repetition: { requested_count: 2, completed_count: 0, produced: {} },
     },
   });
+
   expect(invoke).toHaveBeenCalledTimes(1);
 });
 
@@ -646,6 +699,7 @@ it('returns one acceptance for --no-wait gather as a receipt, without polling or
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockResolvedValue(running());
+
   const notify = vi.fn();
   const response = await execute([...args, '--no-wait'], notify);
   expect(response).toMatchObject({
@@ -654,6 +708,7 @@ it('returns one acceptance for --no-wait gather as a receipt, without polling or
     hints: [{ note: expect.stringContaining('is in progress') }],
   });
   expect(response).not.toHaveProperty('repetition');
+
   expect(invoke).toHaveBeenCalledTimes(1);
   expect(invoke).toHaveBeenCalledWith('character/gather', {
     character_id: 'Maker0000000',
@@ -677,6 +732,7 @@ it('sends one generated request ID for a --no-wait craft without a repetition su
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockResolvedValue(runningCraft());
+
   const response = await execute(
     [
       'craft',
@@ -690,6 +746,7 @@ it('sends one generated request ID for a --no-wait craft without a repetition su
     ],
     vi.fn(),
   );
+
   expect(response).toMatchObject({ ok: true, data: runningCraft().data });
   expect(response).not.toHaveProperty('repetition');
   expect(invoke).toHaveBeenCalledTimes(1);
@@ -706,10 +763,12 @@ it('omits the fee limit when the craft does not set one', async () => {
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockResolvedValue(runningCraft());
+
   const response = await execute(
     ['craft', '-c', 'Maker0000000', '--recipe', 'wolf_jerky', '--no-wait'],
     vi.fn(),
   );
+
   expect(response).toMatchObject({ ok: true });
   expect(invoke.mock.calls[0]?.[1]).toMatchObject({
     character_id: 'Maker0000000',
@@ -737,6 +796,7 @@ it.each([
     const invoke = vi
       .spyOn(GameClient.prototype, 'invoke')
       .mockRejectedValue(new CliError(code, detail));
+
     const error = await execute(
       [
         'craft',
@@ -750,10 +810,13 @@ it.each([
       ],
       vi.fn(),
     ).catch((thrown: unknown) => thrown);
+
     if (!(error instanceof CliError)) throw new Error('Expected a CliError');
+
     expect(error.code).toBe(code);
     expect(error.detail).toMatchObject({ ...detail, outcome: 'unknown' });
     expect(error.detail.request_id).toEqual(expect.any(String));
+
     const hint = String(error.detail.hint);
     expect(hint).toContain('may already have succeeded');
     expect(hint).toContain('same recipe, fee limit');
@@ -761,6 +824,7 @@ it.each([
     expect(hint).toContain(
       'Do not start another lot or repeat the remaining count',
     );
+
     // 同一IDの再送は既に成立していても安全なので、未実行の証明を要求しない。
     expect(hint).not.toContain('only if it did not take effect');
     // 同一IDの再送が同じロットを照合するため、種類・時刻の突き合わせは求めない。
@@ -775,6 +839,7 @@ it('reports each waited acceptance to stderr, with the craft request ID', async 
     .mockImplementation((path) =>
       Promise.resolve(path === 'character/activity' ? completed() : running()),
     );
+
   const notify = vi.fn();
   await execute([...args, '--count', '2'], notify);
   expect(notify).toHaveBeenCalledTimes(2);
@@ -783,8 +848,10 @@ it('reports each waited acceptance to stderr, with the craft request ID', async 
   invoke.mockReset().mockImplementation((path, body) => {
     if (path === 'character/activity') return Promise.resolve(completedCraft());
     bodies.push(body as Record<string, unknown>);
+
     return Promise.resolve(runningCraft());
   });
+
   const craftNotify = vi.fn();
   await execute(
     [
@@ -798,6 +865,7 @@ it('reports each waited acceptance to stderr, with the craft request ID', async 
     ],
     craftNotify,
   );
+
   expect(craftNotify).toHaveBeenCalledWith(
     expect.objectContaining({
       event: 'activity_accepted',

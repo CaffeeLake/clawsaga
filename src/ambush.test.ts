@@ -28,6 +28,7 @@ function requests() {
   vi.spyOn(GameClient.prototype, 'accessToken').mockResolvedValue('test-token');
   const request = vi.fn<typeof fetch>();
   vi.stubGlobal('fetch', request);
+
   return request;
 }
 
@@ -82,6 +83,7 @@ it.each([
         index === before
           ? { activity_id: index + 2, enemy_id: 'wolf' }
           : undefined;
+
       request.mockResolvedValueOnce(
         response({
           activity:
@@ -98,6 +100,7 @@ it.each([
         }),
       );
     }
+
     const result = await execute(
       [
         'gather',
@@ -110,6 +113,7 @@ it.each([
       ],
       vi.fn(),
     );
+
     const completedAll = before + 1 === count;
     expect(result).toMatchObject({
       ok: completedAll,
@@ -129,12 +133,15 @@ it.each([
         stopped_reason: 'ambush',
       },
     });
-    if (completedAll) expect(result).not.toHaveProperty('error');
-    else
+    if (completedAll) {
+      expect(result).not.toHaveProperty('error');
+    } else {
       expect(result).toHaveProperty(
         'error.message',
         'The repetition ended before all requested attempts completed.',
       );
+    }
+
     expect(request).toHaveBeenCalledTimes((before + 1) * 2);
     for (const [index, sourceId] of sourceIds.entries()) {
       expect(
@@ -159,6 +166,7 @@ it('adds a recovery hint when a wait outcome is unknown', async () => {
     response({ activity: runningGather(activityId) }, true),
   );
   request.mockRejectedValueOnce(new TypeError('socket hang up'));
+
   await expect(
     execute(['gather', '-c', 'Traveler0000', '--item', 'herb'], vi.fn()),
   ).rejects.toMatchObject({
@@ -169,6 +177,7 @@ it('adds a recovery hint when a wait outcome is unknown', async () => {
       hint: expect.stringContaining(`activity -a ${activityId}`),
     },
   });
+
   // The start is sent once; the CLI never re-sends the activity.
   expect(
     request.mock.calls.filter(

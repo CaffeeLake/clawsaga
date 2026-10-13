@@ -33,6 +33,7 @@ const transfer = {
     },
   },
 } as const;
+
 const batch = JSON.stringify([
   { item_id: 'ore', quantity: 10 },
   { instance_id: instance },
@@ -42,10 +43,12 @@ it('sends the whole storage batch as one request and generates a request ID', as
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockResolvedValue(structuredClone(transfer));
+
   const result = await execute(
     ['deposit', '-c', character, '--town', 'selene', '--items', batch],
     vi.fn(),
   );
+
   expect(invoke).toHaveBeenCalledTimes(1);
   const body = invoke.mock.calls[0]![1] as Record<string, unknown>;
   expect(invoke.mock.calls[0]![0]).toBe('character/storage/deposit');
@@ -62,7 +65,9 @@ it('keeps a supplied request ID and the withdrawal path', async () => {
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockResolvedValue(structuredClone(transfer));
+
   const request = '44444444-4444-4444-8444-444444444444';
+
   await execute(
     [
       'withdraw',
@@ -77,6 +82,7 @@ it('keeps a supplied request ID and the withdrawal path', async () => {
     ],
     vi.fn(),
   );
+
   expect(invoke.mock.calls[0]![0]).toBe('character/storage/withdraw');
   expect(invoke.mock.calls[0]![1]).toMatchObject({
     request_id: request,
@@ -90,6 +96,7 @@ it('retains the request ID in an uncertain-result error and rejects a malformed 
     .mockRejectedValue(
       new CliError('SERVICE_UNAVAILABLE', { outcome: 'unknown' }),
     );
+
   await expect(
     execute(
       ['deposit', '-c', character, '--town', 'selene', '--items', batch],
@@ -99,13 +106,16 @@ it('retains the request ID in an uncertain-result error and rejects a malformed 
     code: 'SERVICE_UNAVAILABLE',
     detail: { request_id: expect.any(String), town_id: 'selene' },
   });
+
   invoke.mockClear();
+
   await expect(
     execute(
       ['deposit', '-c', character, '--town', 'selene', '--items', '{not json'],
       vi.fn(),
     ),
   ).rejects.toMatchObject({ code: 'INVALID_ARGUMENTS' });
+
   expect(invoke).not.toHaveBeenCalled();
 });
 
@@ -113,13 +123,16 @@ it('reads one town and searches across towns', async () => {
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockResolvedValue(structuredClone(transfer));
+
   await execute(['storage', '-c', character, '--town', 'selene'], vi.fn());
   expect(invoke.mock.calls[0]![0]).toBe('character/storage');
   expect(invoke.mock.calls[0]![1]).toMatchObject({ town_id: 'selene' });
+
   await execute(
     ['search-storage', '-c', character, '--query', 'Iron Ore'],
     vi.fn(),
   );
+
   expect(invoke.mock.calls[1]![0]).toBe('character/storage/search');
   expect(invoke.mock.calls[1]![1]).toMatchObject({ query: 'Iron Ore' });
 });

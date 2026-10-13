@@ -13,19 +13,23 @@ const tokensSchema = z.object({
   expires_in: z.number().positive(),
   scope: z.string(),
 });
+
 const deviceSchema = z.object({
   device_code: z.string(),
   user_code: z.string(),
   verification_uri_complete: z.url(),
   expires_in: z.number().positive(),
 });
+
 const errorSchema = z.object({ error: z.string() });
 const serverMessageSchema = z.object({
   error: z.object({ message: z.string() }).optional(),
 });
+
 const retryAfterSchema = z.object({
   error: z.object({ retry_after_seconds: z.number().nonnegative() }),
 });
+
 const schemaVersionSchema = z.object({ schema_version: z.string() });
 
 const [supportedSchemaMajor = 0, supportedSchemaMinor = 0] = agentSchemaVersion
@@ -36,8 +40,14 @@ const [supportedSchemaMajor = 0, supportedSchemaMinor = 0] = agentSchemaVersion
 const checkOutcome =
   'The action may still have been applied; check its outcome before another change.';
 
+// Resolves to undefined when the body is not valid JSON.
+async function readBody(response: Response): Promise<unknown> {
+  return response.json().catch(() => undefined);
+}
+
 function serverMessage(body: unknown): string | undefined {
   const parsed = serverMessageSchema.safeParse(body);
+
   return parsed.success ? parsed.data.error?.message : undefined;
 }
 
@@ -48,15 +58,18 @@ function rateLimited(response: Response, body: unknown) {
   const seconds = parsed.success
     ? parsed.data.error.retry_after_seconds
     : headerSeconds;
+
   const retryAfterSeconds =
     seconds !== undefined && Number.isFinite(seconds) && seconds >= 0
       ? seconds
       : undefined;
+
   const message =
     serverMessage(body) ??
     (retryAfterSeconds === undefined
       ? cliErrorMessage('RATE_LIMITED')
       : `Too many requests. Retry after ${retryAfterSeconds} ${retryAfterSeconds === 1 ? 'second' : 'seconds'}.`);
+
   return new CliError('RATE_LIMITED', {
     message,
     ...(retryAfterSeconds === undefined
@@ -71,6 +84,7 @@ function needsUpdate(body: unknown): boolean {
   const [major = 0, minor = 0] = parsed.data.schema_version
     .split('.')
     .map(Number);
+
   return (
     major > supportedSchemaMajor ||
     (major === supportedSchemaMajor && minor > supportedSchemaMinor)
@@ -91,8 +105,10 @@ export function serverOrigin(input: string) {
         url.protocol === 'http:' &&
         ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)
       ))
-  )
+  ) {
     throw new CliError('INVALID_SERVER');
+  }
+
   return url.origin;
 }
 
@@ -119,48 +135,57 @@ export class GameClient {
       throw new CliError('NETWORK_ERROR', { outcome: 'unknown' });
     }
   }
+
   private async oauth(path: string, body: Record<string, string>) {
     const response = await this.send(`/api/auth${path}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams(body),
     });
+
     if (response.status >= 500) throw new CliError('SERVICE_UNAVAILABLE');
-    if (response.status === 429)
-      throw rateLimited(response, await response.json().catch(() => undefined));
+    if (response.status === 429) {
+      throw rateLimited(response, await readBody(response));
+    }
+
     return response;
   }
+
   private async decodeTokens(response: Response): Promise<Credential> {
     if (!response.ok) throw new CliError('AUTH_REQUIRED');
-    const parsed = tokensSchema.safeParse(
-      await response.json().catch(() => null),
-    );
+    const parsed = tokensSchema.safeParse(await readBody(response));
+
     if (!parsed.success) throw new CliError('INVALID_RESPONSE');
+
     return {
       ...parsed.data,
       expires_at: Date.now() + parsed.data.expires_in * 1000,
     };
   }
+
   async login() {
     const response = await this.oauth('/device/code', {
       client_id: 'clawsaga-cli',
       scope: 'game:read game:play offline_access',
       resource: `${this.origin}/mcp`,
     });
+
     if (!response.ok) throw new CliError('AUTH_START_FAILED');
-    const parsed = deviceSchema.safeParse(
-      await response.json().catch(() => null),
-    );
+    const parsed = deviceSchema.safeParse(await readBody(response));
+
     if (!parsed.success) throw new CliError('INVALID_RESPONSE');
     const device = parsed.data;
-    if (new URL(device.verification_uri_complete).origin !== this.origin)
+    if (new URL(device.verification_uri_complete).origin !== this.origin) {
       throw new CliError('INVALID_AUTH_SERVER');
+    }
+
     await this.credentials.update((entries) => {
       entries[this.origin] = {
         device_code: device.device_code,
         expires_at: Date.now() + device.expires_in * 1000,
       };
     });
+
     return {
       ok: true,
       authenticated: false,
@@ -168,11 +193,13 @@ export class GameClient {
       user_code: device.user_code,
     };
   }
+
   async accessToken() {
     const cached = (await this.credentials.read())[this.origin];
     if (!cached) throw new CliError('AUTH_REQUIRED');
-    if (!isPendingAuthorization(cached) && !expiringSoon(cached))
+    if (!isPendingAuthorization(cached) && !expiringSoon(cached)) {
       return cached.access_token;
+    }
 
     // update() saves only when its action returns, so the paths that remove a
     // finished pending authorization return their error instead of throwing it.
@@ -182,39 +209,50 @@ export class GameClient {
       if (isPendingAuthorization(current)) {
         if (current.expires_at <= Date.now()) {
           delete entries[this.origin];
+
           return new CliError('AUTH_NOT_COMPLETED', {
             reason: 'expired_token',
           });
         }
+
         const polled = await this.oauth('/oauth2/token', {
           grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
           client_id: 'clawsaga-cli',
           device_code: current.device_code,
         });
+
         if (polled.ok) {
           const credential = await this.decodeTokens(polled);
           entries[this.origin] = credential;
+
           return credential.access_token;
         }
-        const failure = errorSchema.safeParse(
-          await polled.json().catch(() => null),
-        );
+
+        const failure = errorSchema.safeParse(await readBody(polled));
+
         // An unreadable answer does not say the code was refused, so the code
         // stays and the next command asks again until it expires.
-        if (!failure.success)
+        if (!failure.success) {
           throw new CliError('AUTH_NOT_COMPLETED', {
             reason: 'invalid_response',
           });
+        }
+
         const reason = failure.data.error;
-        if (reason === 'authorization_pending' || reason === 'slow_down')
+        if (reason === 'authorization_pending' || reason === 'slow_down') {
           throw new CliError('AUTH_NOT_COMPLETED', { reason });
+        }
+
         delete entries[this.origin];
+
         return new CliError('AUTH_NOT_COMPLETED', { reason });
       }
+
       // The token request stays inside the lock: the server revokes the whole
       // connection when a rotated refresh token is replayed.
       // Another process may have refreshed while this one waited for the lock.
       if (!expiringSoon(current)) return current.access_token;
+
       const refreshed = await this.decodeTokens(
         await this.oauth('/oauth2/token', {
           grant_type: 'refresh_token',
@@ -222,12 +260,17 @@ export class GameClient {
           refresh_token: current.refresh_token,
         }),
       );
+
       entries[this.origin] = refreshed;
+
       return refreshed.access_token;
     });
+
     if (result instanceof CliError) throw result;
+
     return result;
   }
+
   async invoke(path: string, input: unknown) {
     let token: string;
     try {
@@ -239,6 +282,7 @@ export class GameClient {
       // request as an unknown outcome, which does not apply to this step.
       throw new CliError(error.code, { ...error.detail, outcome: 'not_sent' });
     }
+
     const response = await this.send(`/api/v1/${path}`, {
       method: 'POST',
       headers: {
@@ -247,26 +291,33 @@ export class GameClient {
       },
       body: JSON.stringify(input),
     });
-    const body: unknown = await response.json().catch(() => undefined);
+
+    const body = await readBody(response);
     const message = serverMessage(body);
-    if (response.status === 401)
+    if (response.status === 401) {
       throw new CliError('AUTH_REQUIRED', {
         message: message
           ? `${message} Run auth login and try again.`
           : cliErrorMessage('AUTH_REQUIRED'),
       });
+    }
+
     if (response.status === 429) throw rateLimited(response, body);
-    if (response.status >= 500)
+    if (response.status >= 500) {
       throw new CliError('SERVICE_UNAVAILABLE', message ? { message } : {});
-    if (body === undefined)
+    }
+
+    if (body === undefined) {
       throw new CliError('INVALID_RESPONSE', {
         message: `The server returned a response that was not valid JSON. ${checkOutcome}`,
         operation: path,
         http_status: response.status,
       });
+    }
+
     const parsed = agentGameResponseSchema.safeParse(body);
     if (!parsed.success) {
-      if (needsUpdate(body))
+      if (needsUpdate(body)) {
         throw new CliError('UPDATE_REQUIRED', {
           operation: path,
           http_status: response.status,
@@ -274,6 +325,8 @@ export class GameClient {
           // The automatic update verifies a read against this server.
           server: this.origin,
         });
+      }
+
       throw new CliError('INVALID_RESPONSE', {
         message: `The server response did not match this CLI's expected format. ${checkOutcome}`,
         operation: path,
@@ -283,6 +336,7 @@ export class GameClient {
         ],
       });
     }
+
     return parsed.data;
   }
 
@@ -292,20 +346,26 @@ export class GameClient {
     schema: z.ZodType<Output>,
   ): Promise<Output> {
     const response = await this.send(`/api/v1/${path}`, { method: 'GET' });
-    const body: unknown = await response.json().catch(() => undefined);
+    const body = await readBody(response);
     if (response.status === 429) throw rateLimited(response, body);
     if (response.status >= 500) throw new CliError('SERVICE_UNAVAILABLE');
+
     const parsed = schema.safeParse(body);
     if (parsed.success) return parsed.data;
+
     const message = serverMessage(body);
-    if (response.status === 400 && message)
+    if (response.status === 400 && message) {
       throw new CliError('INVALID_ARGUMENTS', { message });
-    if (body === undefined)
+    }
+
+    if (body === undefined) {
       throw new CliError('INVALID_RESPONSE', {
         message: 'The server returned a response that was not valid JSON.',
         operation: path,
         http_status: response.status,
       });
+    }
+
     throw new CliError('INVALID_RESPONSE', {
       message: "The server response did not match this CLI's expected format.",
       operation: path,

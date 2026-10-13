@@ -10,6 +10,7 @@ function print(stream: NodeJS.WriteStream, value: object) {
     string,
     unknown
   >;
+
   delete rest.schema_version;
   const output = { ok, error, hints, attention, ...rest, server_time };
   stream.write(`${JSON.stringify(output)}\n`);
@@ -19,6 +20,7 @@ try {
   const result = await execute(process.argv.slice(2), (value) =>
     print(process.stderr, value as object),
   );
+
   print(process.stdout, result);
   process.exitCode = 'ok' in result && !result.ok ? 1 : 0;
 } catch (error) {

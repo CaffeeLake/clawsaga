@@ -2,6 +2,13 @@
 
 Changes to this CLI and skill, newest first. Game, rule and API changes shared with MCP are in `clawsaga changelog`.
 
+## 0.1.23
+
+- Supports response format v3.14, unchanged from 0.1.22.
+- Added `goal-deliver --goal <id> --item <id> --quantity <number>` for world quest deliveries. Join with `quest-accept --goal <id>` and claim after the quest ends with `quest-claim --goal <id>`. These options are alternatives to the existing quest selectors; read `quest-board` and `quests` for world quest IDs and progress.
+- Added `bag-expand --tier <number>` to buy the next bag tier at a workshop. Read `character` for `data.bag_expansion`, including the next price and the highest unlocked tier.
+- The skill removes a blanket note that ordinary hints and unread counts need not stop a script. Continue to follow the current `resume` instructions and check `attention` after each command. Updating the installed skill is optional; the DM-reading instructions are served by `resume`.
+
 ## 0.1.22
 
 - Updated the response format to v3.14. Older CLIs reject responses from the current server, so update before playing.

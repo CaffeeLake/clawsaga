@@ -22,7 +22,9 @@ function renderHint(hint: AgentHint, character?: string): string {
   if (hint.note !== undefined) return hint.note;
   const render =
     hint.operation === undefined ? undefined : command[hint.operation];
+
   if (!render || !hint.arguments) return `Use the ${hint.operation} operation.`;
+
   return render(hint.arguments, character);
 }
 
@@ -53,8 +55,10 @@ function ambushNotes(
   const lastResult = response.data.last_result;
   const activity: AgentRunningActivity | undefined =
     response.data.activity ?? undefined;
+
   const ambush = lastResult?.ambush;
   if (!lastResult || !ambush) return { notes };
+
   // The server always suggests reading the ambush combat. Phrase the read
   // here instead, so it only appears when that combat is not already the
   // response's current activity.
@@ -71,11 +75,13 @@ function ambushNotes(
     notes.push(
       `The ${lastResult.kind} activity is complete. Read the ambush battle report with \`${activityCommand(ambush.activity_id, character)}\` if you have not seen it.`,
     );
-    if (activity)
+    if (activity) {
       notes.push(
         `Your ${activity.kind} activity (${activity.activity_id}) is now in progress.`,
       );
+    }
   }
+
   return { notes, supersededActivityId: ambush.activity_id };
 }
 
@@ -91,7 +97,9 @@ function stateNotes(
   const lastResult = response.data.last_result;
   const activity: AgentRunningActivity | undefined =
     response.data.activity ?? undefined;
+
   const repetition = repetitionOf(response);
+
   if (repetition && repetition.completed_count < repetition.requested_count) {
     // A failed read leaves the attempt that was in progress unconfirmed, so the
     // confirmed count must not read as if the stopped attempt produced nothing.
@@ -99,19 +107,22 @@ function stateNotes(
       repetition.stopped_reason === 'activity_failed'
         ? ' The last attempt may also have succeeded. Check your current or latest activity before continuing.'
         : '';
+
     notes.push(
       `Stopped with ${repetition.completed_count} of ${repetition.requested_count} attempts completed. You keep their results.${unconfirmed}`,
     );
   } else if (!wait && response.ok) {
-    if (lastResult)
+    if (lastResult) {
       notes.push(
         `This ${lastResult.kind} activity has already finished. No new activity was started.`,
       );
-    else if (activity)
+    } else if (activity) {
       notes.push(
         `Your ${activity.kind} activity is in progress. Check it with \`${activityCommand(activity.activity_id, character)}\`.`,
       );
+    }
   }
+
   return { notes, supersededActivityId };
 }
 
@@ -133,6 +144,7 @@ export function withRenderedHints(
     character,
     options.wait !== false,
   );
+
   const rendered = (hints ?? [])
     .filter(
       (hint) =>
@@ -140,7 +152,9 @@ export function withRenderedHints(
         !supersededAmbushHint(hint, supersededActivityId),
     )
     .map((hint) => ({ note: renderHint(hint, character) }));
+
   if (rendered.length === 0 && notes.length === 0) return rest;
+
   return {
     ...rest,
     hints: [...rendered, ...notes.map((note) => ({ note }))],
@@ -159,6 +173,7 @@ export type RecoveryContext = {
 
 function itemChangeRecovery(character: string | undefined) {
   const read = `character${character ? ` -c ${character}` : ''} --include inventory`;
+
   return [
     'The result is unclear. The item may already have been used or discarded; do not repeat the command.',
     `Check your HP, MP and inventory with \`${read}\`.`,
@@ -173,16 +188,25 @@ export function recoveryHint(
   context: RecoveryContext,
 ): string | undefined {
   const repetition = detail.repetition as RepetitionSummary | undefined;
-  if (detail.outcome !== 'unknown' && repetition?.stopped_reason !== 'unknown')
+  if (
+    detail.outcome !== 'unknown' &&
+    repetition?.stopped_reason !== 'unknown'
+  ) {
     return undefined;
+  }
+
   if (context.itemChange) return itemChangeRecovery(context.character);
+
   const activityId =
     typeof detail.activity_id === 'number' ? detail.activity_id : undefined;
+
   const requestId =
     typeof detail.request_id === 'string' ? detail.request_id : undefined;
+
   const parts = [
     'The result is unclear. Check what happened before taking another action.',
   ];
+
   if (context.activity) parts.push('Your activity may already have succeeded.');
   if (activityId) {
     parts.push(
@@ -196,11 +220,14 @@ export function recoveryHint(
       `Check your current or latest activity with \`${current}\`. Compare its kind and time with your command. If you cannot tell whether it is the same activity, do not repeat the command.`,
     );
   }
-  if (requestId)
+
+  if (requestId) {
     parts.push(
       context.craft
         ? `Retry only that craft with the same recipe, fee limit and \`--request ${requestId}\` to check what happened. This will not start a second craft. Do not start another lot or repeat the remaining count.`
         : `Retry the same command with the same arguments and \`--request ${requestId}\` to check what happened. This will not repeat the action.`,
     );
+  }
+
   return parts.join(' ');
 }

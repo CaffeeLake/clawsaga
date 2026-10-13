@@ -16,11 +16,14 @@ it('requires an explicit repair method and sends that choice without fallback', 
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockResolvedValue(initial);
+
   const args = ['repair', '-c', 'Maker0000000', '--instance', 'k3v9q2m7xa'];
+
   await expect(execute(args, vi.fn())).rejects.toMatchObject({
     code: 'INVALID_ARGUMENTS',
   });
   expect(invoke).not.toHaveBeenCalled();
+
   for (const method of ['kit', 'npc']) {
     await execute([...args, '--method', method], vi.fn());
     expect(invoke).toHaveBeenLastCalledWith('character/equipment/repair', {
@@ -37,6 +40,7 @@ it('uses one selected origin for authorization and game commands, with explicit 
     this: GameClient,
   ) {
     origins.push(this.origin);
+
     return Promise.resolve({
       ok: true,
       authenticated: false,
@@ -48,26 +52,31 @@ it('uses one selected origin for authorization and game commands, with explicit 
     this: GameClient,
   ) {
     origins.push(this.origin);
+
     return Promise.resolve(initial);
   });
+
   vi.stubEnv('CLAWSAGA_SERVER', undefined);
   await execute(['characters'], vi.fn());
   vi.stubEnv('CLAWSAGA_SERVER', 'http://localhost:3000');
   await execute(['auth', 'login'], vi.fn());
   await execute(['characters'], vi.fn());
   await execute(['characters', '-s', 'http://127.0.0.1:3000'], vi.fn());
+
   expect(origins).toEqual([
     'https://clawsaga.net',
     'http://localhost:3000',
     'http://localhost:3000',
     'http://127.0.0.1:3000',
   ]);
+
   for (const value of ['', 'not a URL', 'http://clawsaga.net']) {
     vi.stubEnv('CLAWSAGA_SERVER', value);
     await expect(execute(['characters'], vi.fn())).rejects.toMatchObject({
       code: 'INVALID_SERVER',
     });
   }
+
   expect(origins).toHaveLength(4);
 });
 
@@ -75,6 +84,7 @@ it('accepts a reusable one-battle tactic file and rejects fight inputs the CLI c
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockResolvedValue(initial);
+
   const tactic = {
     rules: [
       {
@@ -84,6 +94,7 @@ it('accepts a reusable one-battle tactic file and rejects fight inputs the CLI c
     ],
     potion_limit: 0,
   };
+
   vi.mocked(readFile).mockResolvedValue(
     JSON.stringify({ enemy_id: 'wolf', tactic }),
   );
@@ -91,11 +102,13 @@ it('accepts a reusable one-battle tactic file and rejects fight inputs the CLI c
     ['fight', '-c', 'Traveler0000', '--input', 'fight.json', '--no-wait'],
     vi.fn(),
   );
+
   expect(invoke).toHaveBeenCalledWith('character/combat/start', {
     character_id: 'Traveler0000',
     enemy_id: 'wolf',
     tactic,
   });
+
   vi.mocked(readFile).mockResolvedValue(JSON.stringify({ tactic }));
   await execute(
     [
@@ -110,18 +123,22 @@ it('accepts a reusable one-battle tactic file and rejects fight inputs the CLI c
     ],
     vi.fn(),
   );
+
   expect(invoke).toHaveBeenLastCalledWith('character/combat/start', {
     character_id: 'Traveler0000',
     enemy_id: 'boar',
     tactic,
   });
-  for (const flags of [['--preset', 'safe'], ['--practice']])
+
+  for (const flags of [['--preset', 'safe'], ['--practice']]) {
     await expect(
       execute(
         ['fight', '-c', 'Traveler0000', '--input', 'fight.json', ...flags],
         vi.fn(),
       ),
     ).rejects.toMatchObject({ code: 'INVALID_ARGUMENTS' });
+  }
+
   vi.mocked(readFile).mockResolvedValue(JSON.stringify({ tactic }));
   await expect(
     execute(['fight', '-c', 'Traveler0000', '--input', 'fight.json'], vi.fn()),
@@ -133,15 +150,18 @@ it('resolves a named character to a Character ID without -c or a JSON body', asy
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockResolvedValue(initial);
+
   await execute(['resolve-character', '--name', 'Aster'], vi.fn());
   expect(invoke).toHaveBeenCalledWith('characters/resolve', {
     locale: 'en',
     name: 'Aster',
   });
+
   await execute(
     ['resolve-character', '--name', 'Aster', '--discriminator', '0427'],
     vi.fn(),
   );
+
   expect(invoke).toHaveBeenLastCalledWith('characters/resolve', {
     locale: 'en',
     name: 'Aster',
@@ -160,6 +180,7 @@ it('keeps English help available without authorization and separates content lan
       ]),
     },
   });
+
   const help = await execute(['hello', '--help'], vi.fn());
   expect(help).toMatchObject({
     ok: true,
@@ -175,17 +196,21 @@ it('keeps English help available without authorization and separates content lan
     },
   });
   expect(help).not.toHaveProperty('input_schema');
+
   expect(await execute(['schema', 'hello'], vi.fn())).toMatchObject({
     input_kind: 'api_request',
     input_schema: { required: ['character_id'] },
   });
+
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockResolvedValue(initial);
+
   await execute(
     ['hello', '-s', 'https://example.com', '-c', 'Traveler0000', '-l', 'ja'],
     vi.fn(),
   );
+
   expect(invoke).toHaveBeenLastCalledWith('character/hello', {
     character_id: 'Traveler0000',
     locale: 'ja',
@@ -199,10 +224,14 @@ it('lists the response data keys of every game command in its help', async () =>
     const { help } = (await execute([name, '--help'], vi.fn())) as unknown as {
       help: { data_keys: string[] };
     };
+
     expect(help.data_keys, name).not.toEqual([]);
   }
+
   expect(await execute(['quest-board', '--help'], vi.fn())).toMatchObject({
-    help: { data_keys: ['quest_board', 'quest_board_budget'] },
+    help: {
+      data_keys: ['quest_board', 'quest_board_budget', 'community_goals'],
+    },
   });
 });
 
@@ -218,6 +247,7 @@ it('generates structured help examples from the command definitions without auth
       options: { flags: string; required: boolean; choices?: string[] }[];
     };
   };
+
   expect(createHelp.help.usage).toBe('clawsaga create -i <file> [options]');
   expect(createHelp.help.examples).toContain(
     'clawsaga create -i character.json',
@@ -237,15 +267,18 @@ it('generates structured help examples from the command definitions without auth
       }),
     ]),
   );
+
   const schema = await execute(['schema', 'create'], vi.fn());
   expect(schema).toMatchObject({
     input_kind: 'json_body',
     input_schema: { required: expect.arrayContaining(['preferred_locale']) },
   });
+
   const routeHelp = (await execute(
     ['route', '--help'],
     vi.fn(),
   )) as unknown as { help: { usage: string } };
+
   expect(routeHelp.help.usage).toBe(
     'clawsaga route -c <id> --to <id> [options]',
   );
@@ -256,8 +289,9 @@ it('emits no upper limit in any command schema', async () => {
     const result = await execute(['schema', name], vi.fn());
     const schema = JSON.stringify(result);
     expect(schema, name).not.toMatch(/"maxLength"|"maxItems"/);
-    for (const match of schema.matchAll(/"maximum":(\d+)/g))
+    for (const match of schema.matchAll(/"maximum":(\d+)/g)) {
       expect(Number(match[1]), name).toBe(Number.MAX_SAFE_INTEGER);
+    }
   }
 });
 
@@ -269,12 +303,15 @@ it('parses every structured help command example with a fake client', async () =
     data: {},
     error: { message: 'Fixture response.' },
   };
+
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockResolvedValue(failure);
+
   const program = (await execute([], vi.fn())) as unknown as {
     help: { commands: { name: string }[] };
   };
+
   const special = new Set([
     'update',
     'guide [--topic <topic>] [--query <text>]',
@@ -283,6 +320,7 @@ it('parses every structured help command example with a fake client', async () =
     'schema <command>',
     'auth login',
   ]);
+
   let checked = 0;
 
   for (const { name } of program.help.commands) {
@@ -290,12 +328,15 @@ it('parses every structured help command example with a fake client', async () =
     const result = (await execute([name, '--help'], vi.fn())) as unknown as {
       help: { examples: string[]; input_example?: Record<string, unknown> };
     };
+
     for (const example of result.help.examples) {
       expect(example.startsWith('clawsaga ')).toBe(true);
-      if (result.help.input_example)
+      if (result.help.input_example) {
         vi.mocked(readFile).mockResolvedValue(
           JSON.stringify(result.help.input_example),
         );
+      }
+
       await execute(shellArguments(example), vi.fn());
       checked += 1;
     }
@@ -322,6 +363,7 @@ it('passes a Character ID that begins with a dash without treating it as an opti
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockResolvedValue(initial);
+
   await execute(['hello', '-c', '-AbC123xyz_9'], vi.fn());
   expect(invoke).toHaveBeenLastCalledWith('character/hello', {
     character_id: '-AbC123xyz_9',
@@ -332,13 +374,28 @@ it('accepts comma-separated include sections', async () => {
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockResolvedValue(initial);
+
   await execute(
     ['character', '-c', 'Aster0000000', '--include', 'profile,inventory'],
     vi.fn(),
   );
+
   expect(invoke).toHaveBeenLastCalledWith('character', {
     character_id: 'Aster0000000',
     include: ['profile', 'inventory'],
+  });
+});
+
+it('maps bag-expand --tier to the tier to buy', async () => {
+  const invoke = vi
+    .spyOn(GameClient.prototype, 'invoke')
+    .mockResolvedValue(initial);
+
+  await execute(['bag-expand', '-c', 'Traveler0000', '--tier', '2'], vi.fn());
+
+  expect(invoke).toHaveBeenCalledWith('character/bag/expand', {
+    character_id: 'Traveler0000',
+    tier: 2,
   });
 });
 
@@ -346,20 +403,24 @@ it('maps stack and individual discard flags', async () => {
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockResolvedValue(initial);
+
   await execute(
     ['discard', '-c', 'Traveler0000', '--item', 'wolf_meat', '--quantity', '2'],
     vi.fn(),
   );
+
   expect(invoke).toHaveBeenLastCalledWith('character/item/discard', {
     character_id: 'Traveler0000',
     target: { kind: 'stack', item_id: 'wolf_meat', quantity: 2 },
   });
+
   invoke.mockClear();
   const instance = 'k3v9q2m7xa';
   await execute(
     ['discard', '-c', 'Traveler0000', '--instance', instance],
     vi.fn(),
   );
+
   expect(invoke).toHaveBeenCalledWith('character/item/discard', {
     character_id: 'Traveler0000',
     target: {
@@ -373,6 +434,7 @@ it('sends a value outside the documented enum to the server instead of rejecting
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockResolvedValue(initial);
+
   await execute(
     [
       'fight',
@@ -386,6 +448,7 @@ it('sends a value outside the documented enum to the server instead of rejecting
     ],
     vi.fn(),
   );
+
   expect(invoke).toHaveBeenCalledWith('character/combat/start', {
     character_id: 'Aster0000000',
     enemy_id: 'wolf',
@@ -438,11 +501,13 @@ it('returns the parser reason and command-specific help without sending a reques
       },
     });
   }
+
   await expect(
     execute(['equip', '--item', 'iron_sword'], vi.fn()),
   ).rejects.toMatchObject({
     detail: { help_command: 'clawsaga equip --help' },
   });
+
   expect(invoke).not.toHaveBeenCalled();
 });
 
@@ -450,9 +515,11 @@ it('sends JSON examples with the character and locale flags added to the body', 
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockResolvedValue(initial);
+
   const program = (await execute([], vi.fn())) as unknown as {
     help: { commands: { name: string }[] };
   };
+
   const special = new Set([
     'guide [--topic <topic>] [--query <text>]',
     'resume',
@@ -460,12 +527,15 @@ it('sends JSON examples with the character and locale flags added to the body', 
     'schema <command>',
     'auth login',
   ]);
+
   let checked = 0;
+
   for (const { name } of program.help.commands) {
     if (special.has(name)) continue;
     const help = (await execute([name, '--help'], vi.fn())) as unknown as {
       help: { usage: string; input_example?: Record<string, unknown> };
     };
+
     const inputExample = help.help.input_example;
     if (!inputExample) continue;
     vi.mocked(readFile).mockResolvedValue(JSON.stringify(inputExample));
@@ -473,21 +543,25 @@ it('sends JSON examples with the character and locale flags added to the body', 
     if (name === 'fight') args.push('--no-wait');
     if (help.help.usage.includes('-c <id>')) args.push('-c', 'Traveler0000');
     await execute(args, vi.fn());
+
     expect(invoke.mock.lastCall?.[1]).toMatchObject({
       locale: 'ja',
       ...(help.help.usage.includes('-c <id>')
         ? { character_id: 'Traveler0000' }
         : {}),
     });
+
     const schema = (await execute(['schema', name], vi.fn())) as unknown as {
       input_kind: string;
       input_schema: { properties: object };
     };
+
     expect(schema.input_kind).toBe('json_body');
     expect(schema.input_schema.properties).not.toHaveProperty('character_id');
     expect(schema.input_schema.properties).not.toHaveProperty('locale');
     checked += 1;
   }
+
   expect(checked).toBeGreaterThan(0);
 });
 
@@ -495,16 +569,19 @@ it('sends map scope, look people and route or travel destinations', async () => 
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockResolvedValue(initial);
+
   await execute(['map', '-c', 'Traveler0000', '--full'], vi.fn());
   expect(invoke).toHaveBeenLastCalledWith('world/map', {
     character_id: 'Traveler0000',
     full: true,
   });
+
   await execute(['look', '-c', 'Traveler0000', '--people'], vi.fn());
   expect(invoke).toHaveBeenLastCalledWith('character/look', {
     character_id: 'Traveler0000',
     people: true,
   });
+
   await execute(
     ['look', '-c', 'Traveler0000', '--cursor', 'Nearby000000'],
     vi.fn(),
@@ -513,21 +590,25 @@ it('sends map scope, look people and route or travel destinations', async () => 
     character_id: 'Traveler0000',
     cursor: 'Nearby000000',
   });
+
   await execute(['route', '-c', 'Traveler0000', '--to', 'openpit'], vi.fn());
   expect(invoke).toHaveBeenLastCalledWith('character/route', {
     character_id: 'Traveler0000',
     to: 'openpit',
   });
+
   invoke.mockResolvedValueOnce({
     ...initial,
     ok: false,
     error: { message: 'That destination is not adjacent.' },
   });
+
   await execute(['travel', '-c', 'Traveler0000', '--to', 'mossway'], vi.fn());
   expect(invoke).toHaveBeenLastCalledWith('character/travel', {
     character_id: 'Traveler0000',
     to: 'mossway',
   });
+
   await execute(
     ['carriage', '-c', 'Traveler0000', '--to', 'dolgan', '--no-wait'],
     vi.fn(),
@@ -542,6 +623,7 @@ it('rejects the removed paid-mode flags without sending requests', async () => {
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockResolvedValue(initial);
+
   for (const args of [
     ['rest', '-c', 'Traveler0000', '--inn'],
     ['travel', '-c', 'Traveler0000', '--to', 'dolgan', '--carriage'],
@@ -550,6 +632,7 @@ it('rejects the removed paid-mode flags without sending requests', async () => {
       code: 'INVALID_ARGUMENTS',
     });
   }
+
   expect(invoke).not.toHaveBeenCalled();
 });
 
@@ -557,6 +640,7 @@ it('accepts a shared offer or a fixed quest and requires exactly one source', as
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockResolvedValue(initial);
+
   await execute(
     [
       'quest-accept',
@@ -571,6 +655,7 @@ it('accepts a shared offer or a fixed quest and requires exactly one source', as
     character_id: 'Traveler0000',
     offer_id: '11111111-1111-4111-8111-111111111111',
   });
+
   await execute(
     [
       'quest-accept',
@@ -585,6 +670,13 @@ it('accepts a shared offer or a fixed quest and requires exactly one source', as
     character_id: 'Traveler0000',
     fixed_quest_id: 'nina_selene_letter',
   });
+
+  await execute(['quest-accept', '-c', 'Traveler0000', '--goal', '3'], vi.fn());
+  expect(invoke).toHaveBeenLastCalledWith('character/quests/accept', {
+    character_id: 'Traveler0000',
+    goal_id: 3,
+  });
+
   for (const flags of [
     [],
     [
@@ -593,10 +685,67 @@ it('accepts a shared offer or a fixed quest and requires exactly one source', as
       '--fixed-quest',
       'nina_selene_letter',
     ],
-  ])
+    ['--fixed-quest', 'nina_selene_letter', '--goal', '3'],
+  ]) {
     await expect(
       execute(['quest-accept', '-c', 'Traveler0000', ...flags], vi.fn()),
     ).rejects.toMatchObject({ code: 'INVALID_ARGUMENTS' });
+  }
+
+  expect(invoke).toHaveBeenCalledTimes(3);
+});
+
+it('maps goal-deliver flags to the delivery request', async () => {
+  const invoke = vi
+    .spyOn(GameClient.prototype, 'invoke')
+    .mockResolvedValue(initial);
+
+  await execute(
+    [
+      'goal-deliver',
+      '-c',
+      'Traveler0000',
+      '--goal',
+      '3',
+      '--item',
+      'ore',
+      '--quantity',
+      '12',
+    ],
+    vi.fn(),
+  );
+
+  expect(invoke).toHaveBeenCalledWith('character/quests/goals/deliver', {
+    character_id: 'Traveler0000',
+    goal_id: 3,
+    item_id: 'ore',
+    quantity: 12,
+  });
+});
+
+it('claims a quest or an ended world quest and requires exactly one', async () => {
+  const invoke = vi
+    .spyOn(GameClient.prototype, 'invoke')
+    .mockResolvedValue(initial);
+
+  await execute(['quest-claim', '-c', 'Traveler0000', '--quest', '4'], vi.fn());
+  expect(invoke).toHaveBeenCalledWith('character/quests/claim', {
+    character_id: 'Traveler0000',
+    quest_number: 4,
+  });
+
+  await execute(['quest-claim', '-c', 'Traveler0000', '--goal', '3'], vi.fn());
+  expect(invoke).toHaveBeenLastCalledWith('character/quests/claim', {
+    character_id: 'Traveler0000',
+    goal_id: 3,
+  });
+
+  for (const flags of [[], ['--quest', '4', '--goal', '3']]) {
+    await expect(
+      execute(['quest-claim', '-c', 'Traveler0000', ...flags], vi.fn()),
+    ).rejects.toMatchObject({ code: 'INVALID_ARGUMENTS' });
+  }
+
   expect(invoke).toHaveBeenCalledTimes(2);
 });
 
@@ -604,6 +753,7 @@ it('maps item, recipe, active quest and journal discovery flags', async () => {
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockResolvedValue(initial);
+
   await execute(['items', '-c', 'Traveler0000', '--query', 'MP 回復'], vi.fn());
   await execute(
     ['recipes', '-c', 'Traveler0000', '--skill', 'cooking'],
@@ -611,6 +761,7 @@ it('maps item, recipe, active quest and journal discovery flags', async () => {
   );
   await execute(['quests', '-c', 'Traveler0000', '--active-only'], vi.fn());
   await execute(['journal', '-c', 'Traveler0000', '--query', 'wolf'], vi.fn());
+
   expect(invoke.mock.calls).toEqual([
     ['character/items', { character_id: 'Traveler0000', query: 'MP 回復' }],
     [
@@ -626,10 +777,12 @@ it('passes item IDs to the server, including definitions unknown to this CLI', a
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockResolvedValue(initial);
+
   await execute(
     ['use', '-c', 'Traveler0000', '--item', 'future_tonic'],
     vi.fn(),
   );
+
   expect(invoke).toHaveBeenLastCalledWith('character/item/use', {
     character_id: 'Traveler0000',
     item_id: 'future_tonic',
@@ -640,10 +793,12 @@ it('sends use --count as one request and does not repeat it', async () => {
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockResolvedValue(initial);
+
   await execute(
     ['use', '-c', 'Traveler0000', '--item', 'wolf_jerky', '--count', '5'],
     vi.fn(),
   );
+
   expect(invoke).toHaveBeenCalledTimes(1);
   expect(invoke).toHaveBeenLastCalledWith('character/item/use', {
     character_id: 'Traveler0000',
@@ -659,10 +814,12 @@ it('reads the server changelog without a character', async () => {
       locale: 'en',
       changelog: { entries: [], next_cursor: null },
     });
+
   expect(await execute(['changelog'], vi.fn())).toMatchObject({
     locale: 'en',
     changelog: { entries: [], next_cursor: null },
   });
+
   expect(read).toHaveBeenCalledWith('changelog?locale=en', expect.anything());
 });
 
@@ -674,10 +831,12 @@ it('adds changelog notices to hello only', async () => {
       changelog: { published_at: '2026-09-18', title: 'Rest tuning' },
     },
   };
+
   vi.spyOn(GameClient.prototype, 'invoke').mockResolvedValue(hello);
   expect(await execute(['hello', '-c', 'Traveler0000'], vi.fn())).toMatchObject(
     { hints: [{ note: expect.stringContaining('Rest tuning') }] },
   );
+
   expect(await execute(['characters'], vi.fn())).toEqual(hello);
 });
 
@@ -685,13 +844,16 @@ it('reads the guide index, one topic or a search from the document route', async
   const read = vi
     .spyOn(GameClient.prototype, 'readDocument')
     .mockResolvedValue({ guide: { topics: [] } });
+
   await execute(['guide'], vi.fn());
   expect(read).toHaveBeenLastCalledWith('guide', expect.anything());
+
   await execute(['guide', '--topic', 'overview'], vi.fn());
   expect(read).toHaveBeenLastCalledWith(
     'guide?topic=overview',
     expect.anything(),
   );
+
   await execute(['guide', '--query', 'ambush|potion'], vi.fn());
   expect(read).toHaveBeenLastCalledWith(
     'guide?query=ambush%7Cpotion',

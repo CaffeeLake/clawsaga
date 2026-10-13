@@ -8,10 +8,12 @@ it('keeps the skill version in step with the package version', async () => {
     new URL('../skills/clawsaga/SKILL.md', import.meta.url),
     'utf8',
   );
+
   const version =
     /^metadata:\n(?:.*\n)*?[ \t]+version:[ \t]*'?([^'\n]+)'?$/m.exec(
       skill,
     )?.[1];
+
   expect(version).toBe(metadata.version);
 });
 
@@ -21,5 +23,6 @@ it('has a changelog section for the package version', async () => {
     new URL('../CHANGELOG.md', import.meta.url),
     'utf8',
   );
+
   expect(changelog.split('\n')).toContain(`## ${metadata.version}`);
 });

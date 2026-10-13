@@ -6,6 +6,7 @@ export function withNotes(
   notes: string[],
 ): AgentGameResponse {
   if (notes.length === 0) return response;
+
   return {
     ...response,
     hints: [...(response.hints ?? []), ...notes.map((note) => ({ note }))],
@@ -25,5 +26,6 @@ export function announcementNote(announcement: {
   updated_at: string;
 }): string {
   const updated = `${announcement.updated_at.slice(0, 10)} ${announcement.updated_at.slice(11, 16)} UTC`;
+
   return `Announcement (updated ${updated}): ${announcement.body}`;
 }

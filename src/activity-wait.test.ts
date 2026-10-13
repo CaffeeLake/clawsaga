@@ -21,8 +21,10 @@ it.each(['travel', 'carriage'])(
   'waits for %s and queries only the accepted activity until completion',
   async (command) => {
     vi.useFakeTimers();
-    if (initial.data.activity?.kind !== 'travel')
+    if (initial.data.activity?.kind !== 'travel') {
       throw new Error('Expected travel fixture');
+    }
+
     const completed: AgentGameResponse = {
       ...initial,
       data: {
@@ -37,16 +39,20 @@ it.each(['travel', 'carriage'])(
         },
       },
     };
+
     const invoke = vi
       .spyOn(GameClient.prototype, 'invoke')
       .mockResolvedValueOnce(initial)
       .mockResolvedValueOnce({ ...initial, next_poll_after_seconds: 10 })
       .mockResolvedValueOnce(completed);
+
     const notify = vi.fn();
+
     const pending = execute(
       [command, '-c', 'Traveler0000', '--to', 'openpit', '-l', 'en'],
       notify,
     );
+
     await vi.advanceTimersByTimeAsync(4999);
     expect(invoke).toHaveBeenCalledTimes(1);
     expect(notify).toHaveBeenCalledTimes(1);
@@ -76,17 +82,21 @@ it('returns one acceptance for --no-wait travel and inn without polling or a wai
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockResolvedValue(initial);
+
   const notify = vi.fn();
+
   const travel = await execute(
     ['travel', '-c', 'Traveler0000', '--to', 'openpit', '--no-wait'],
     notify,
   );
+
   expect(travel).toMatchObject({ ok: true, data: initial.data });
   expect(invoke).toHaveBeenCalledTimes(1);
   expect(invoke).toHaveBeenLastCalledWith('character/travel', {
     character_id: 'Traveler0000',
     to: 'openpit',
   });
+
   await execute(['inn', '-c', 'Traveler0000', '--no-wait'], notify);
   expect(invoke).toHaveBeenLastCalledWith('character/inn', {
     character_id: 'Traveler0000',
@@ -99,6 +109,7 @@ it('returns one acceptance for --no-wait travel and inn without polling or a wai
 const [schemaMajor = 0, schemaMinor = 0] = agentSchemaVersion
   .split('.')
   .map(Number);
+
 const lostStartResponses: [
   string,
   string,
@@ -141,10 +152,12 @@ it.each(lostStartResponses)(
       'fetch',
       vi.fn(() => Promise.resolve(respond())),
     );
+
     const travel = await execute(
       ['travel', '-c', 'Traveler0000', '--to', 'openpit'],
       vi.fn(),
     ).catch((thrown: unknown) => thrown);
+
     if (!(travel instanceof CliError)) throw new Error('Expected a CliError');
     // 応答が読めなくてもサーバーは受付済みかもしれないため、結果不明として扱う。
     // 更新した後に開始し直すのではなく、受付済みかもしれない活動を先に照合する。
@@ -164,6 +177,7 @@ it.each(lostStartResponses)(
     const map = await execute(['map', '-c', 'Traveler0000'], vi.fn()).catch(
       (thrown: unknown) => thrown,
     );
+
     if (!(map instanceof CliError)) throw new Error('Expected a CliError');
     expect(map.code).toBe(code);
     expect(map.detail).not.toHaveProperty('outcome');
@@ -183,6 +197,7 @@ it.each([
   vi.spyOn(GameClient.prototype, 'accessToken').mockRejectedValue(
     new CliError('INVALID_RESPONSE'),
   );
+
   const error = await execute(args, vi.fn()).catch((thrown: unknown) => thrown);
   if (!(error instanceof CliError)) throw new Error('Expected a CliError');
   expect(error.code).toBe('INVALID_RESPONSE');
@@ -228,9 +243,11 @@ it.each(
     );
     const request = vi.fn(respond);
     vi.stubGlobal('fetch', request);
+
     const error = await execute(args, vi.fn()).catch(
       (thrown: unknown) => thrown,
     );
+
     if (!(error instanceof CliError)) throw new Error('Expected a CliError');
     // 使用・廃棄は要求IDを持たないため、自動で再送せず、受理済みの可能性を残す。
     expect(request).toHaveBeenCalledTimes(1);
@@ -248,6 +265,7 @@ it('reports wait contract and authorization failures without resubmitting accept
   vi.useFakeTimers();
   const client = new GameClient('https://example.com');
   const invoke = vi.spyOn(client, 'invoke');
+
   await expect(
     waitForActivity(
       client,
@@ -264,6 +282,7 @@ it('reports wait contract and authorization failures without resubmitting accept
       activity_id: initial.data.activity!.activity_id,
     },
   });
+
   expect(invoke).not.toHaveBeenCalled();
 
   invoke.mockResolvedValue({ ...initial, data: { activity: null } });
@@ -276,8 +295,10 @@ it('reports wait contract and authorization failures without resubmitting accept
       activity_id: initial.data.activity!.activity_id,
     },
   });
+
   await vi.advanceTimersByTimeAsync(5000);
   await mismatched;
+
   expect(invoke).toHaveBeenCalledTimes(1);
 
   invoke.mockClear().mockRejectedValue(
@@ -288,6 +309,7 @@ it('reports wait contract and authorization failures without resubmitting accept
       fields: ['data.activity'],
     }),
   );
+
   const invalid = expect(
     waitForActivity(client, { character: 'Traveler0000' }, initial),
   ).rejects.toMatchObject({
@@ -300,8 +322,10 @@ it('reports wait contract and authorization failures without resubmitting accept
       activity_id: initial.data.activity!.activity_id,
     },
   });
+
   await vi.advanceTimersByTimeAsync(5000);
   await invalid;
+
   expect(invoke).toHaveBeenCalledTimes(1);
 
   invoke.mockClear().mockRejectedValue(new CliError('AUTH_REQUIRED'));
@@ -311,8 +335,10 @@ it('reports wait contract and authorization failures without resubmitting accept
     code: 'AUTH_REQUIRED',
     detail: { activity_id: initial.data.activity!.activity_id },
   });
+
   await vi.advanceTimersByTimeAsync(5000);
   await unauthorized;
+
   expect(invoke).toHaveBeenCalledTimes(1);
 });
 
@@ -342,6 +368,7 @@ it('waits for an accepted fight and returns a cancellation without starting anot
       },
     },
   };
+
   const cancelled: AgentGameResponse = {
     ...initial,
     data: {
@@ -355,10 +382,12 @@ it('waits for an accepted fight and returns a cancellation without starting anot
       },
     },
   };
+
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockResolvedValueOnce(battle)
     .mockResolvedValueOnce(cancelled);
+
   const pending = execute(
     [
       'fight',
@@ -372,6 +401,7 @@ it('waits for an accepted fight and returns a cancellation without starting anot
     ],
     vi.fn(),
   );
+
   await vi.advanceTimersByTimeAsync(9999);
   expect(invoke).toHaveBeenCalledTimes(1);
   await vi.advanceTimersByTimeAsync(1);

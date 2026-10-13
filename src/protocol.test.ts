@@ -8,6 +8,7 @@ it('rejects responses whose status and error disagree', () => {
     server_time: '2026-09-12T00:00:00.000Z',
     data: {},
   };
+
   expect(
     agentGameResponseSchema.safeParse({ ...result, ok: false }).success,
   ).toBe(false);

@@ -20,11 +20,13 @@ export const credentialSchema = z.object({
   expires_at: z.number(),
   scope: z.string(),
 });
+
 export type Credential = z.infer<typeof credentialSchema>;
 export const pendingAuthorizationSchema = z.object({
   device_code: z.string(),
   expires_at: z.number(),
 });
+
 export type PendingAuthorization = z.infer<typeof pendingAuthorizationSchema>;
 export type CredentialEntry = Credential | PendingAuthorization;
 const storeSchema = z.record(
@@ -61,8 +63,14 @@ export class CredentialStore {
     try {
       return storeSchema.parse(JSON.parse(await readFile(this.path, 'utf8')));
     } catch (error) {
-      if (error instanceof Error && 'code' in error && error.code === 'ENOENT')
+      if (
+        error instanceof Error &&
+        'code' in error &&
+        error.code === 'ENOENT'
+      ) {
         return {};
+      }
+
       throw error;
     }
   }
@@ -77,6 +85,7 @@ export class CredentialStore {
       // Permission bits are best effort; some filesystems do not support them.
       await chmod(directory, 0o700).catch(() => undefined);
       await writeFile(join(directory, '.gitignore'), '*\n');
+
       release = await lockfile.lock(directory, {
         realpath: false,
         lockfilePath: join(directory, 'credentials.lock'),
@@ -87,12 +96,14 @@ export class CredentialStore {
         // request and the save that follows it.
         stale: 60_000,
       });
+
       await chmod(this.path, 0o600).catch(() => undefined);
       const entries = await this.parse();
       const original = JSON.stringify(entries);
       const result = await action(entries);
       const updated = JSON.stringify(entries);
       if (updated === original) return result;
+
       const temporary = join(directory, `.credentials-${randomUUID()}.tmp`);
       try {
         const file = await open(temporary, 'wx', 0o600);
@@ -102,10 +113,12 @@ export class CredentialStore {
         } finally {
           await file.close();
         }
+
         await rename(temporary, this.path);
       } finally {
         await rm(temporary, { force: true });
       }
+
       return result;
     } catch (error) {
       if (error instanceof CliError) throw error;

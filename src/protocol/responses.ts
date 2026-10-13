@@ -21,16 +21,19 @@ export type AgentHint = z.infer<typeof agentHintSchema>;
 export const guideResponseSchema = z.looseObject({
   guide: z.looseObject({}),
 });
+
 export type GuideResponse = z.infer<typeof guideResponseSchema>;
 
 export const agentResumeResponseSchema = z.looseObject({
   resume: z.looseObject({}),
 });
+
 export type AgentResumeResponse = z.infer<typeof agentResumeResponseSchema>;
 
 export const changelogResponseSchema = z.looseObject({
   changelog: z.looseObject({}),
 });
+
 export type ChangelogResponse = z.infer<typeof changelogResponseSchema>;
 
 export const agentSchemaVersion = '3.14';

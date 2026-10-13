@@ -11,6 +11,7 @@ import {
   searchCharactersSchema,
   resolveCharacterSchema,
   updateProfileSchema,
+  includeSchema,
 } from './protocol.js';
 import {
   jsonFlag,
@@ -96,10 +97,10 @@ export const characterCommands: Record<string, CommandDefinition> = {
         '--include <sections>',
         'Comma-separated profile,inventory,repair_estimates,growth; repair estimates also include inventory',
         false,
-        ['profile', 'inventory', 'repair_estimates', 'growth'],
+        includeSchema.options,
       ],
     ],
-    help: 'Read character status, job and skill levels, combat stats, capacity and rest estimate. Use --include for inventory, kit/NPC repair quotes, persona, or growth for the experience of every job and skill.',
+    help: 'Read character status, job and skill levels, combat stats, collection counts (enemy kinds defeated and recipes crafted), capacity and rest estimate. Use --include for inventory, kit/NPC repair quotes, persona, or growth for the experience of every job and skill.',
   },
   create: {
     path: 'character/create',

@@ -21,9 +21,11 @@ it('posts an aside to the monologue endpoint', async () => {
       },
     },
   };
+
   const invoke = vi
     .spyOn(GameClient.prototype, 'invoke')
     .mockResolvedValue(receipt);
+
   await execute(
     ['monologue', '-c', 'AsideHero000', '-i', 'aside.json'],
     vi.fn(),

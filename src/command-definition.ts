@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { Values } from './command-input.js';
+import { localeSchema } from './protocol/ids.js';
 
 export type CommandFlag = readonly [
   flags: string,
@@ -27,7 +28,10 @@ export type CommandDefinition = {
   path: string;
   schema: z.ZodObject;
   flags: readonly CommandFlag[];
-  /** Request body fields by commander option key (`--max-price` is `maxPrice`). */
+  /**
+   * Request body fields by commander option key (`--max-price` is `maxPrice`).
+   * Read only when the body is built from flags, not from `--input`.
+   */
   input?: Readonly<Record<string, InputField>>;
   /** Adds the body fields that `input` cannot express. */
   buildInput?: (values: Values, input: Record<string, unknown>) => void;
@@ -69,7 +73,7 @@ export const globalOptions: readonly GlobalOption[] = [
   {
     flags: '-l, --content-language <language>',
     description: 'Game content language for this call',
-    choices: ['ja', 'en'],
+    choices: localeSchema.options,
   },
   {
     flags: '-s, --server <origin>',
@@ -101,6 +105,7 @@ export function bodySchema(definition: CommandDefinition) {
   if ('character_id' in definition.schema.shape) mask.character_id = true;
   const { shape } = definition.schema;
   const body = z.strictObject(shape).omit(mask);
+
   // The CLI fills a missing request_id, so the body file may leave it out.
   return definition.autoRequestId && shape.request_id
     ? body.extend({ request_id: z.optional(shape.request_id) })

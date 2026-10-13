@@ -82,10 +82,12 @@ function harness(
         path,
         body: (raw ? JSON.parse(raw) : {}) as Record<string, unknown>,
       };
+
       requests.push(request);
       handle(request, response, requests);
     });
   });
+
   return new Promise<{ origin: string; requests: Recorded[] }>((resolve) => {
     server.listen(0, '127.0.0.1', () => {
       const address = server.address();
@@ -117,6 +119,7 @@ function workspace(origin: string) {
       },
     }),
   );
+
   return directory;
 }
 
@@ -128,21 +131,26 @@ function runCli(origin: string, args: string[]) {
     HOME: directory,
     USERPROFILE: directory,
   };
+
   delete env.CLAWSAGA_SERVER;
+
   const child: ChildProcess = spawn(
     process.execPath,
     [cli, ...args, '-s', origin],
     { cwd: directory, env },
   );
+
   let stdout = '';
   let stderr = '';
   child.stdout?.setEncoding('utf8');
   child.stdout?.on('data', (chunk: string) => (stdout += chunk));
   child.stderr?.setEncoding('utf8');
   child.stderr?.on('data', (chunk: string) => (stderr += chunk));
+
   cleanups.push(() => {
     child.kill('SIGKILL');
   });
+
   return {
     child,
     stdout: () => stdout,
@@ -168,8 +176,10 @@ it('recovers an accepted travel whose response was lost, without a second start'
     if (request.path === '/api/v1/character/travel') {
       // サーバーは受付済みだが応答が届かない。
       response.destroy();
+
       return;
     }
+
     response.end(currentActivity);
   });
 
@@ -180,6 +190,7 @@ it('recovers an accepted travel whose response was lost, without a second start'
     '--to',
     'openpit',
   ]);
+
   const failed = await first.exited;
   expect(failed.code).not.toBe(0);
   expect(JSON.parse(first.stdout())).toMatchObject({
@@ -210,8 +221,10 @@ it('recovers a travel killed during the wait from its acceptance diagnostic', as
   const { origin, requests } = await harness((request, response) => {
     if (request.path === '/api/v1/character/travel') {
       response.end(accepted(30));
+
       return;
     }
+
     response.end(currentActivity);
   });
 
@@ -222,16 +235,20 @@ it('recovers a travel killed during the wait from its acceptance diagnostic', as
     '--to',
     'openpit',
   ]);
+
   await waitFor(() => waiting.stderr().includes('activity_accepted'));
   waiting.child.kill('SIGKILL');
   await waiting.exited;
+
   expect(waiting.stdout()).toBe('');
 
   const line = waiting
     .stderr()
     .split('\n')
     .find((entry) => entry.includes('activity_accepted'));
+
   const diagnostic = JSON.parse(line ?? '{}') as Record<string, unknown>;
+
   expect(diagnostic).toMatchObject({
     event: 'activity_accepted',
     activity_id: travelId,
@@ -248,6 +265,7 @@ it('recovers a travel killed during the wait from its acceptance diagnostic', as
     '-a',
     String(diagnostic.activity_id),
   ]);
+
   expect(await recovery.exited).toEqual({ code: 0, signal: null });
   expect(JSON.parse(recovery.stdout())).toMatchObject({
     ok: true,
@@ -274,6 +292,7 @@ it('preserves a failure and an accepted activity through the built CLI', async (
   const fixtures = contractFixtures.filter(
     ({ name }) => name === 'business_failure' || name === 'accepted_activity',
   );
+
   let index = 0;
   const { origin, requests } = await harness((_request, response) => {
     const fixture = fixtures[index++];
@@ -287,6 +306,7 @@ it('preserves a failure and an accepted activity through the built CLI', async (
       fixture.name === 'accepted_activity'
         ? ['travel', '-c', characterId, '--to', 'openpit', '--no-wait']
         : ['activity', '-c', characterId];
+
     const cli = runCli(origin, args);
     expect(await cli.exited).toEqual({
       code: fixture.response.ok ? 0 : 1,
@@ -295,6 +315,7 @@ it('preserves a failure and an accepted activity through the built CLI', async (
     const output: { hints?: unknown } & Record<string, unknown> = JSON.parse(
       cli.stdout(),
     );
+
     // 先頭だけ読まれても失敗とヒントが落ちないよう`data`より前に出し、時刻は
     // 最後に置く。
     const keys = Object.keys(output);
@@ -302,6 +323,7 @@ it('preserves a failure and an accepted activity through the built CLI', async (
       fixture.response.ok ? ['ok', 'hints'] : ['ok', 'error'],
     );
     expect(keys.at(-1)).toBe('server_time');
+
     if (fixture.name === 'accepted_activity') {
       expect(output.hints).toEqual([
         {
@@ -310,10 +332,12 @@ it('preserves a failure and an accepted activity through the built CLI', async (
       ]);
       delete output.hints;
     }
+
     const expected: Record<string, unknown> = { ...fixture.response };
     delete expected.schema_version;
     expect(output).toEqual(expected);
   }
+
   expect(requests).toHaveLength(fixtures.length);
   expect(
     requests.filter((request) => request.path === '/api/v1/character/travel'),

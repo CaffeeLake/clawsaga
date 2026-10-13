@@ -9,12 +9,15 @@ import {
   buyMarketListingSchema,
   cancelMarketListingSchema,
   claimMarketListingSchema,
+  marketQualitySchema,
+  marketSectionSchema,
+  marketSourceSchema,
 } from './protocol.js';
 import type { CommandDefinition } from './command-definition.js';
 import type { Values } from './command-input.js';
 
-const qualityChoices = ['standard', 'fine', 'superior'] as const;
-const sourceChoices = ['carried', 'storage'] as const;
+const qualityChoices = marketQualitySchema.options;
+const sourceChoices = marketSourceSchema.options;
 const requestFlag = [
   '--request <uuid>',
   'Reuse the same ID and arguments after an uncertain result',
@@ -70,7 +73,7 @@ export const marketCommands: Record<string, CommandDefinition> = {
         'Only listings at or above this durability',
       ],
     ],
-    help: 'Read every active item and quality in a market town with best bid and ask, one page at a time. Add --item to read one stack board or individual listings.',
+    help: 'Read every active item and quality in a market town with best bid and ask, one page at a time. includes_own: true appears only on rows holding your own open order or listing. last_price is the unit price of the most recent trade on that stack board, absent if it has none. Add --item to read one stack board, including last_traded_at and boards with no open orders, or individual listings.',
     examples: [
       'clawsaga market -c m7Qp2_aR9L-x --town corvent',
       'clawsaga market -c m7Qp2_aR9L-x --town corvent --item ore --quality standard',
@@ -85,7 +88,7 @@ export const marketCommands: Record<string, CommandDefinition> = {
         '--section <section>',
         'Read only this section; required with --cursor',
         false,
-        ['orders', 'listings', 'trades'],
+        marketSectionSchema.options,
       ],
       ['--cursor <number>', "That section's next_cursor from a previous read"],
     ],

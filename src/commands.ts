@@ -10,8 +10,9 @@ import {
   type ChangelogResponse,
   type GuideResponse,
 } from './protocol.js';
+import { localeSchema } from './protocol/ids.js';
 import { GameClient, serverOrigin } from './client.js';
-import { CliError } from './errors.js';
+import { CliError, invalidArguments } from './errors.js';
 import { recoveryHint, withRenderedHints } from './hints.js';
 import { announcementNote, changelogNote, withNotes } from './notices.js';
 import { updateCli } from './update.js';
@@ -77,6 +78,7 @@ export async function execute(args: string[], notify: Notify) {
   } catch (error) {
     return helpOrFailure(error, run);
   }
+
   return commandOutput(run);
 }
 
@@ -84,13 +86,17 @@ export async function execute(args: string[], notify: Notify) {
 function helpOrFailure(error: unknown, run: Run) {
   if (error instanceof CliError) throw withRecoveryGuidance(error, run);
   if (!(error instanceof CommanderError)) throw error;
-  if (error.code === 'commander.version')
+  if (error.code === 'commander.version') {
     return { ok: true, version: metadata.version };
+  }
+
   if (
     error.code === 'commander.helpDisplayed' ||
     (error.code === 'commander.help' && error.exitCode === 0)
-  )
+  ) {
     return { ok: true, help: structuredHelp(run.helpTarget) };
+  }
+
   throw new CliError('INVALID_ARGUMENTS', {
     message: error.message,
     help_command: run.helpCommand,
@@ -102,10 +108,13 @@ function commandOutput(run: Run) {
   const { result, executed } = run;
   if (!result) throw new CliError('INVALID_COMMAND');
   if (!isGameResponse(result)) return result;
+
   const rendered = withRenderedHints(result, executed?.character, {
     wait: executed?.wait ?? true,
   });
+
   if (executed?.name !== 'hello' || !rendered.ok) return rendered;
+
   return withNotes(rendered, helloNotes(rendered));
 }
 
@@ -118,6 +127,7 @@ function withRecoveryGuidance(error: CliError, run: Run) {
   const help = ['INVALID_ARGUMENTS', 'INVALID_INPUT_FILE'].includes(error.code)
     ? { help_command: run.helpCommand }
     : {};
+
   // 主活動・使用・廃棄の応答が読めない場合も、サーバーは受付済みかもしれない。
   // 送信前の失敗は除き、受付応答を失った場合と同じ復旧手順を返す。
   const activity = definition?.startsActivity === true;
@@ -126,6 +136,7 @@ function withRecoveryGuidance(error: CliError, run: Run) {
     (activity || itemChange) && isLostResponse(error)
       ? { ...error.detail, outcome: 'unknown' }
       : error.detail;
+
   // A thrown error never reaches withRenderedHints, so carry the recovery
   // guidance in the failure envelope itself.
   const hint = recoveryHint(detail, {
@@ -134,7 +145,9 @@ function withRecoveryGuidance(error: CliError, run: Run) {
     craft: definition?.repeat?.requestIdPerLot === true,
     itemChange,
   });
+
   if (Object.keys(help).length === 0 && !hint) return error;
+
   return new CliError(error.code, {
     ...detail,
     ...help,
@@ -153,10 +166,14 @@ function isLostResponse(error: CliError) {
 
 function helloNotes(response: AgentGameResponse): string[] {
   const notes: string[] = [];
-  if (response.data.announcement)
+  if (response.data.announcement) {
     notes.push(announcementNote(response.data.announcement));
-  if (response.data.changelog)
+  }
+
+  if (response.data.changelog) {
     notes.push(changelogNote(response.data.changelog));
+  }
+
   return notes;
 }
 
@@ -173,7 +190,7 @@ function createProgram(run: Run, notify: Notify) {
       new Option(
         '-l, --content-language <language>',
         'Game content language for this call',
-      ).choices(['ja', 'en']),
+      ).choices(localeSchema.options),
     )
     .addOption(new Option('-c, --character <id>', 'Character ID'))
     .exitOverride()
@@ -187,10 +204,12 @@ function createProgram(run: Run, notify: Notify) {
       writeErr: () => undefined,
       outputError: () => undefined,
     });
+
   program.action(() => program.help());
   program.on('--help', () => {
     run.helpTarget = 'clawsaga';
   });
+
   program
     .command('update')
     .description('Install the latest CLI with npm')
@@ -200,10 +219,13 @@ function createProgram(run: Run, notify: Notify) {
     .action(async () => {
       run.result = { ok: true, version: await updateCli() };
     });
+
   addSchemaCommand(program, run);
   addDocumentCommands(program, run);
-  for (const [name, definition] of Object.entries(commands))
+  for (const [name, definition] of Object.entries(commands)) {
     addGameCommand(program, run, notify, name, definition);
+  }
+
   return program;
 }
 
@@ -222,12 +244,13 @@ function addSchemaCommand(program: Command, run: Run) {
     .action((name: string) => {
       run.helpCommand = 'clawsaga schema --help';
       const definition = commands[name];
-      if (!definition)
-        throw new CliError('INVALID_ARGUMENTS', {
-          fields: ['command'],
-          message:
-            'Choose a game command from clawsaga --help, then run clawsaga schema <command>.',
-        });
+      if (!definition) {
+        throw invalidArguments(
+          ['command'],
+          'Choose a game command from clawsaga --help, then run clawsaga schema <command>.',
+        );
+      }
+
       const hasBody = definition.flags.some(([flags]) => flags === jsonFlag[0]);
       run.schemaHelpResult = {
         input_kind: hasBody ? 'json_body' : 'api_request',
@@ -237,6 +260,7 @@ function addSchemaCommand(program: Command, run: Run) {
         ),
       };
     });
+
   schemaCommand.on('--help', () => {
     run.helpTarget = 'schema';
   });
@@ -261,10 +285,12 @@ const documentCommands: readonly DocumentCommand[] = [
       const search = new URLSearchParams();
       if (values.topic !== undefined) search.set('topic', values.topic);
       if (values.query !== undefined) search.set('query', values.query);
+
       return search.size === 0 ? 'guide' : `guide?${search.toString()}`;
     },
     schema: guideResponseSchema,
   },
+
   {
     name: 'resume',
     description:
@@ -273,6 +299,7 @@ const documentCommands: readonly DocumentCommand[] = [
     path: () => 'guide/resume',
     schema: agentResumeResponseSchema,
   },
+
   {
     name: 'changelog',
     description: 'Read the server changelog, newest first.',
@@ -293,12 +320,16 @@ function addDocumentCommands(program: Command, run: Run) {
           run.helpCommand = `clawsaga ${document.name} --help`;
         },
       });
-    for (const option of document.options)
+
+    for (const option of document.options) {
       command.option(option.flags, option.description);
+    }
+
     command.on('--help', () => {
       run.helpTarget = `clawsaga ${document.name}`;
       run.helpCommand = `clawsaga ${document.name} --help`;
     });
+
     command.action(async () => {
       run.helpCommand = `clawsaga ${document.name} --help`;
       const values = optionsSchema.parse(command.optsWithGlobals());
@@ -308,6 +339,7 @@ function addDocumentCommands(program: Command, run: Run) {
       );
     });
   }
+
   const login = program
     .command('auth')
     .description('Manage authorization')
@@ -318,6 +350,7 @@ function addDocumentCommands(program: Command, run: Run) {
         run.helpCommand = 'clawsaga auth login --help';
       },
     });
+
   login.on('--help', () => {
     run.helpTarget = 'auth login';
   });
@@ -343,17 +376,22 @@ function addGameCommand(
         run.helpCommand = `clawsaga ${name} --help`;
       },
     });
+
   for (const [flags, description] of definition.flags) {
     command.option(flags, description);
   }
-  if (definition.inputExample)
+
+  if (definition.inputExample) {
     command.addHelpText(
       'after',
       `\nJSON body: use input_example below with your own content. Full schema: clawsaga schema ${name}.`,
     );
+  }
+
   command.on('--help', () => {
     run.helpTarget = `clawsaga ${name}`;
   });
+
   command.action(async () => {
     run.helpCommand = `clawsaga ${name} --help`;
     const executed: ExecutedCommand = {
@@ -362,16 +400,22 @@ function addGameCommand(
       character: undefined,
       wait: true,
     };
+
     run.executed = executed;
+
     const values = optionsSchema.parse(command.optsWithGlobals());
     executed.character = values.character;
     executed.wait = values.wait !== false;
     assertRequiredOptions(definition, values, command.opts());
+
     const requestedId = values.request;
-    if (definition.autoRequestId && !values.request)
+    if (definition.autoRequestId && !values.request) {
       values.request = randomUUID();
+    }
+
     const input = await commandInput(definition, values);
     const client = clientFor(values);
+
     if (definition.repeat) {
       const { requestIdPerLot } = definition.repeat;
       const count = repeatCount(requestIdPerLot, values, requestedId);
@@ -385,8 +429,10 @@ function addGameCommand(
             { requestIdPerLot, notify },
           )
         : await invokeGame(client, definition, input, values);
+
       return;
     }
+
     const response = await invokeGame(client, definition, input, values);
     run.result =
       definition.startsActivity && response.ok && executed.wait
@@ -409,17 +455,19 @@ function assertRequiredOptions(
   values: Values,
   provided: Record<string, unknown>,
 ) {
-  if (definition.requiresCharacter !== false && !values.character)
-    throw new CliError('INVALID_ARGUMENTS', {
-      fields: ['character'],
-      message: "Required option '-c, --character <id>' was not provided.",
-    });
+  if (definition.requiresCharacter !== false && !values.character) {
+    throw invalidArguments(
+      ['character'],
+      "Required option '-c, --character <id>' was not provided.",
+    );
+  }
+
   for (const [flags, , required] of definition.flags) {
     if (!required || provided[optionKey(flags)] !== undefined) continue;
-    throw new CliError('INVALID_ARGUMENTS', {
-      fields: [optionKey(flags)],
-      message: `Required option '${flags}' was not provided.`,
-    });
+    throw invalidArguments(
+      [optionKey(flags)],
+      `Required option '${flags}' was not provided.`,
+    );
   }
 }
 
@@ -432,11 +480,13 @@ async function invokeGame(
   try {
     return await client.invoke(definition.path, input);
   } catch (error) {
-    if (definition.errorContext && error instanceof CliError)
+    if (definition.errorContext && error instanceof CliError) {
       throw new CliError(error.code, {
         ...error.detail,
         ...definition.errorContext(values, input),
       });
+    }
+
     throw error;
   }
 }
@@ -447,21 +497,26 @@ function repeatCount(
   requestedId: string | undefined,
 ) {
   const count = values.count === undefined ? 1 : Number(values.count);
-  if (!Number.isSafeInteger(count) || count < 1)
-    throw new CliError('INVALID_ARGUMENTS', {
-      fields: ['count'],
-      message: '--count must be a positive safe integer.',
-    });
-  if (requestIdPerLot && requestedId !== undefined && count !== 1)
-    throw new CliError('INVALID_ARGUMENTS', {
-      fields: ['request'],
-      message:
-        '--request retries a single lot; use --count 1 or omit --request.',
-    });
-  if (values.wait === false && count !== 1)
-    throw new CliError('INVALID_ARGUMENTS', {
-      fields: ['count'],
-      message: '--no-wait starts one activity; use --count 1 or omit --count.',
-    });
+  if (!Number.isSafeInteger(count) || count < 1) {
+    throw invalidArguments(
+      ['count'],
+      '--count must be a positive safe integer.',
+    );
+  }
+
+  if (requestIdPerLot && requestedId !== undefined && count !== 1) {
+    throw invalidArguments(
+      ['request'],
+      '--request retries a single lot; use --count 1 or omit --request.',
+    );
+  }
+
+  if (values.wait === false && count !== 1) {
+    throw invalidArguments(
+      ['count'],
+      '--no-wait starts one activity; use --count 1 or omit --count.',
+    );
+  }
+
   return count;
 }

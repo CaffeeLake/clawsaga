@@ -11,7 +11,10 @@ import {
   equipSchema,
   repairSchema,
   discardItemSchema,
+  expandBagSchema,
+  repairMethodSchema,
 } from './protocol.js';
+import { skillIdSchema } from './protocol/ids.js';
 import { noWaitFlag, type CommandDefinition } from './command-definition.js';
 import { integerFlag } from './command-input.js';
 
@@ -73,15 +76,7 @@ export const productionCommands: Record<string, CommandDefinition> = {
         '--skill <id>',
         'Filter the recipe list by required skill',
         false,
-        [
-          'mining',
-          'gathering',
-          'smithing',
-          'crafting',
-          'alchemy',
-          'cooking',
-          'enchanting',
-        ],
+        skillIdSchema.options,
       ],
       ['--recipe <id>', 'Read one recipe in detail'],
     ],
@@ -214,7 +209,7 @@ export const productionCommands: Record<string, CommandDefinition> = {
         '--method <kit|npc>',
         'kit: full repair using parts; npc: paid repair up to 70%, no parts. No fallback',
         true,
-        ['kit', 'npc'],
+        repairMethodSchema.options,
       ],
       [
         '--instance <id>',
@@ -223,6 +218,20 @@ export const productionCommands: Record<string, CommandDefinition> = {
       ],
     ],
     help: 'Choose kit or npc repair explicitly at a town smithy while idle. Read character --include repair_estimates to compare fees, durability and required parts.',
+  },
+  'bag-expand': {
+    path: 'character/bag/expand',
+    schema: expandBagSchema,
+    input: { tier: ['tier', 'number'] },
+    flags: [
+      [
+        '--tier <number>',
+        'Tier to buy: one above your current bag_expansion.tier',
+        true,
+      ],
+    ],
+    help: 'Buy the next bag tier while idle in a town with a workshop, raising maximum_weight by 10 for a one-time gold price. Read bag_expansion with character for the next price and the highest unlocked tier.',
+    examples: ['clawsaga bag-expand -c m7Qp2_aR9L-x --tier 1'],
   },
   discard: {
     path: 'character/item/discard',

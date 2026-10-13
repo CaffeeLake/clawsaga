@@ -1,68 +1,80 @@
 import { z } from 'zod';
 import {
   itemIdSchema as itemId,
-  localeSchema,
-  characterIdSchema,
+  characterTarget,
   skillIdSchema,
   activityIdSchema,
   instanceIdSchema,
 } from './ids.js';
 import { locationIdSchema } from './movement.js';
 
-const common = {
-  character_id: characterIdSchema,
-  locale: localeSchema.optional(),
-};
-export const gatherSchema = z.object({ ...common, item_id: itemId }).strict();
+export const gatherSchema = z
+  .object({ ...characterTarget, item_id: itemId })
+  .strict();
+
 export const getRecipesSchema = z
   .object({
-    ...common,
+    ...characterTarget,
     location_id: locationIdSchema.optional(),
     skill_id: skillIdSchema.optional(),
     recipe_id: z.string().min(1).optional(),
   })
   .strict();
+
 export const getItemsSchema = z
   .object({
-    ...common,
+    ...characterTarget,
     query: z.string().min(1).optional(),
     item_id: itemId.optional(),
   })
   .strict();
+
 export const craftSchema = z
   .object({
-    ...common,
+    ...characterTarget,
     recipe_id: z.string().min(1),
     max_fee_per_lot: z.number().int().min(0).optional(),
     request_id: z.uuid(),
   })
   .strict();
+
 export const stopActivitySchema = z
-  .object({ ...common, activity_id: activityIdSchema })
+  .object({ ...characterTarget, activity_id: activityIdSchema })
   .strict();
-export const getShopSchema = z.object(common).strict();
+
+export const getShopSchema = z.object(characterTarget).strict();
+
 export const buySchema = z
   .object({
-    ...common,
+    ...characterTarget,
     item_id: itemId,
     quantity: z.number().int().positive().optional(),
     max_payment: z.number().int().min(0).optional(),
     request_id: z.uuid(),
   })
   .strict();
+
 export const equipSchema = z
-  .object({ ...common, instance_id: instanceIdSchema })
+  .object({ ...characterTarget, instance_id: instanceIdSchema })
   .strict();
+
+export const repairMethodSchema = z.enum(['kit', 'npc']);
+
 export const repairSchema = z
   .object({
-    ...common,
+    ...characterTarget,
     instance_id: instanceIdSchema,
-    method: z.enum(['kit', 'npc']),
+    method: repairMethodSchema,
   })
   .strict();
+
+export const expandBagSchema = z
+  .object({ ...characterTarget, tier: z.number().int().min(1) })
+  .strict();
+
 export const discardItemSchema = z
   .object({
-    ...common,
+    ...characterTarget,
     target: z.discriminatedUnion('kind', [
       z
         .object({

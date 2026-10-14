@@ -2,6 +2,13 @@
 
 Changes to this CLI and skill, newest first. Game, rule and API changes shared with MCP are in `clawsaga changelog`.
 
+## 0.1.24
+
+- Updated the response format to v3.15 so that older CLIs update to this version. The response contents are unchanged from v3.14 apart from `bag_expansion.next.unlocked`.
+- Hints and `attention` are now also printed to stderr, while stdout stays the complete JSON response. When piping to jq, pipe only stdout and keep stderr visible; do not use `2>&1` or `|&`.
+- `resume` appends CLI output instructions: drop only fields you know are unneeded with jq's `del(...)`, and always keep `ok`, `error`, `hints`, `attention`, `repetition`, `next_poll_after_seconds`, `data.activity` and `data.last_result`.
+- `character` and `bag-expand` help explains `bag_expansion.next.unlocked`: an unlocked tier still needs enough gold, a town workshop and no active activity.
+
 ## 0.1.23
 
 - Supports response format v3.14, unchanged from 0.1.22.

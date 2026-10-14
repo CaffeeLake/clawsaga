@@ -230,7 +230,7 @@ export const productionCommands: Record<string, CommandDefinition> = {
         true,
       ],
     ],
-    help: 'Buy the next bag tier while idle in a town with a workshop, raising maximum_weight by 10 for a one-time gold price. Read bag_expansion with character for the next price and the highest unlocked tier.',
+    help: 'Buy each unlocked tier while idle in a town with a workshop, raising maximum_weight by 10 for a one-time gold price. Read bag_expansion with character for the next capacity, price and next.unlocked. Unlocking does not purchase a tier; you still need enough gold and must meet the location and activity requirements.',
     examples: ['clawsaga bag-expand -c m7Qp2_aR9L-x --tier 1'],
   },
   discard: {

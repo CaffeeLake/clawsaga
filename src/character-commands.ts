@@ -100,7 +100,7 @@ export const characterCommands: Record<string, CommandDefinition> = {
         includeSchema.options,
       ],
     ],
-    help: 'Read character status, job and skill levels, combat stats, collection counts (enemy kinds defeated and recipes crafted), capacity and rest estimate. Use --include for inventory, kit/NPC repair quotes, persona, or growth for the experience of every job and skill.',
+    help: 'Read character status, job and skill levels, combat stats, collection counts (enemy kinds defeated and recipes crafted), capacity, bag_expansion and rest estimate. collection is always included; no --include option is needed for it. bag_expansion.next previews the next tier capacity and price, and next.unlocked shows whether it is unlocked for purchase at a town workshop; gold and activity requirements still apply. Use --include for inventory, kit/NPC repair quotes, persona, or growth for the experience of every job and skill.',
   },
   create: {
     path: 'character/create',

@@ -31,6 +31,7 @@ import {
 } from './command-input.js';
 import { commands } from './command-registry.js';
 import { guideQueryOption, guideTopicOption, structuredHelp } from './help.js';
+import { withCliResumeInstructions } from './resume.js';
 
 type Notify = (value: unknown) => void;
 
@@ -297,7 +298,7 @@ const documentCommands: readonly DocumentCommand[] = [
       'Read the operating guide to follow when starting or resuming play.',
     options: [],
     path: () => 'guide/resume',
-    schema: agentResumeResponseSchema,
+    schema: agentResumeResponseSchema.transform(withCliResumeInstructions),
   },
 
   {

@@ -23956,12 +23956,12 @@ var guideResponseSchema = external_exports.looseObject({
   guide: external_exports.looseObject({})
 });
 var agentResumeResponseSchema = external_exports.looseObject({
-  resume: external_exports.looseObject({})
+  resume: external_exports.looseObject({ body: external_exports.string() })
 });
 var changelogResponseSchema = external_exports.looseObject({
   changelog: external_exports.looseObject({})
 });
-var agentSchemaVersion = "3.14";
+var agentSchemaVersion = "3.15";
 var agentGameResponseSchema = external_exports.looseObject({
   ok: external_exports.boolean(),
   schema_version: external_exports.literal(agentSchemaVersion),
@@ -25081,7 +25081,7 @@ async function recoverUpdate(error61, notify) {
 // package.json
 var package_default = {
   name: "@clawsaga/cli",
-  version: "0.1.23",
+  version: "0.1.24",
   homepage: "https://clawsaga.net",
   repository: {
     type: "git",
@@ -26050,7 +26050,7 @@ var characterCommands = {
         includeSchema.options
       ]
     ],
-    help: "Read character status, job and skill levels, combat stats, collection counts (enemy kinds defeated and recipes crafted), capacity and rest estimate. Use --include for inventory, kit/NPC repair quotes, persona, or growth for the experience of every job and skill."
+    help: "Read character status, job and skill levels, combat stats, collection counts (enemy kinds defeated and recipes crafted), capacity, bag_expansion and rest estimate. collection is always included; no --include option is needed for it. bag_expansion.next previews the next tier capacity and price, and next.unlocked shows whether it is unlocked for purchase at a town workshop; gold and activity requirements still apply. Use --include for inventory, kit/NPC repair quotes, persona, or growth for the experience of every job and skill."
   },
   create: {
     path: "character/create",
@@ -26679,7 +26679,7 @@ var productionCommands = {
         true
       ]
     ],
-    help: "Buy the next bag tier while idle in a town with a workshop, raising maximum_weight by 10 for a one-time gold price. Read bag_expansion with character for the next price and the highest unlocked tier.",
+    help: "Buy each unlocked tier while idle in a town with a workshop, raising maximum_weight by 10 for a one-time gold price. Read bag_expansion with character for the next capacity, price and next.unlocked. Unlocking does not purchase a tier; you still need enough gold and must meet the location and activity requirements.",
     examples: ["clawsaga bag-expand -c m7Qp2_aR9L-x --tier 1"]
   },
   discard: {
@@ -26997,6 +26997,26 @@ function structuredHelp(target2) {
   return definition ? commandHelp(name, definition) : programHelp();
 }
 
+// src/resume.ts
+var cliOutputInstructions = `## CLI output
+
+Read the complete response when choosing your next action. If a script reduces output, use jq's \`del(...)\` to remove only specific data fields you have confirmed are unnecessary. For example, \`jq 'del(.data.inventory)'\` omits an unneeded inventory list while preserving the rest of the response. Keep unfamiliar fields; they may describe an unexpected result.
+
+Always preserve \`ok\`, all of \`error\`, every \`hints\` entry, \`attention\`, \`repetition\`, \`next_poll_after_seconds\`, and all of \`data.activity\` and \`data.last_result\`, including \`ambush\`. Read and handle the hints before continuing. Selecting only \`.data\` or rebuilding an object from a list of expected fields loses other information silently.
+
+The CLI also prints hints and attention to stderr. Read stderr alongside stdout and keep it visible when using \`clawsaga ... | jq '...'\`. Pipe only stdout to jq; \`2>&1\` and \`|&\` mix diagnostics into its JSON input. Preserve the CLI's exit status in scripts, using \`set -o pipefail\` in shells that support it. Never cut output by bytes or lines with \`head\`, \`tail\` or \`cut\`.`;
+function withCliResumeInstructions(response) {
+  return {
+    ...response,
+    resume: {
+      ...response.resume,
+      body: `${response.resume.body}
+
+${cliOutputInstructions}`
+    }
+  };
+}
+
 // src/commands.ts
 function clientFor(values) {
   return new GameClient(serverOrigin(values.server));
@@ -27150,7 +27170,7 @@ var documentCommands = [
     description: "Read the operating guide to follow when starting or resuming play.",
     options: [],
     path: () => "guide/resume",
-    schema: agentResumeResponseSchema
+    schema: agentResumeResponseSchema.transform(withCliResumeInstructions)
   },
   {
     name: "changelog",
@@ -27319,16 +27339,26 @@ function print(stream, value) {
   stream.write(`${JSON.stringify(output2)}
 `);
 }
+function printResult(value) {
+  for (const hint of value.hints ?? []) {
+    if (hint.note !== void 0) process.stderr.write(`Hint: ${hint.note}
+`);
+  }
+  if (value.attention !== void 0) {
+    process.stderr.write(`Attention: ${JSON.stringify(value.attention)}
+`);
+  }
+  print(process.stdout, value);
+}
 try {
   const result = await execute(
     process.argv.slice(2),
     (value) => print(process.stderr, value)
   );
-  print(process.stdout, result);
+  printResult(result);
   process.exitCode = "ok" in result && !result.ok ? 1 : 0;
 } catch (error61) {
-  print(
-    process.stdout,
+  printResult(
     cliFailure(
       await recoverUpdate(
         error61,

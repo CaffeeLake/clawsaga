@@ -25,7 +25,7 @@ export const guideResponseSchema = z.looseObject({
 export type GuideResponse = z.infer<typeof guideResponseSchema>;
 
 export const agentResumeResponseSchema = z.looseObject({
-  resume: z.looseObject({}),
+  resume: z.looseObject({ body: z.string() }),
 });
 
 export type AgentResumeResponse = z.infer<typeof agentResumeResponseSchema>;
@@ -36,7 +36,7 @@ export const changelogResponseSchema = z.looseObject({
 
 export type ChangelogResponse = z.infer<typeof changelogResponseSchema>;
 
-export const agentSchemaVersion = '3.14';
+export const agentSchemaVersion = '3.15';
 
 export const agentGameResponseSchema = z
   .looseObject({

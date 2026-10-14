@@ -1,5 +1,6 @@
 import { execute } from './commands.js';
 import { cliFailure } from './errors.js';
+import type { AgentHint } from './protocol.js';
 import { recoverUpdate } from './update.js';
 
 // 出力の先頭だけを読むエージェントがいる。読み手が存在を予期できない項目を
@@ -16,16 +17,29 @@ function print(stream: NodeJS.WriteStream, value: object) {
   stream.write(`${JSON.stringify(output)}\n`);
 }
 
+function printResult(
+  value: object & { hints?: AgentHint[] | undefined; attention?: unknown },
+) {
+  for (const hint of value.hints ?? []) {
+    if (hint.note !== undefined) process.stderr.write(`Hint: ${hint.note}\n`);
+  }
+
+  if (value.attention !== undefined) {
+    process.stderr.write(`Attention: ${JSON.stringify(value.attention)}\n`);
+  }
+
+  print(process.stdout, value);
+}
+
 try {
   const result = await execute(process.argv.slice(2), (value) =>
     print(process.stderr, value as object),
   );
 
-  print(process.stdout, result);
+  printResult(result);
   process.exitCode = 'ok' in result && !result.ok ? 1 : 0;
 } catch (error) {
-  print(
-    process.stdout,
+  printResult(
     cliFailure(
       await recoverUpdate(error, (note) =>
         print(process.stderr, { hints: [{ note }] }),

@@ -23900,6 +23900,7 @@ var getCharacterSchema = external_exports.object({
   ...presentation,
   include: external_exports.array(includeSchema).optional()
 }).strict();
+var getAchievementsSchema = external_exports.object({ ...target, ...presentation }).strict();
 var updateProfileSchema = external_exports.object({
   ...target,
   ...presentation,
@@ -23961,7 +23962,7 @@ var agentResumeResponseSchema = external_exports.looseObject({
 var changelogResponseSchema = external_exports.looseObject({
   changelog: external_exports.looseObject({})
 });
-var agentSchemaVersion = "3.15";
+var agentSchemaVersion = "3.16";
 var agentGameResponseSchema = external_exports.looseObject({
   ok: external_exports.boolean(),
   schema_version: external_exports.literal(agentSchemaVersion),
@@ -25081,7 +25082,7 @@ async function recoverUpdate(error61, notify) {
 // package.json
 var package_default = {
   name: "@clawsaga/cli",
-  version: "0.1.24",
+  version: "0.1.25",
   homepage: "https://clawsaga.net",
   repository: {
     type: "git",
@@ -25530,7 +25531,7 @@ var adventureCommands = {
     path: "character/tactics",
     schema: getTacticsSchema,
     flags: [],
-    help: "Read your job abilities, saved tactic and presets."
+    help: "Read your job abilities, saved tactic and presets. next_abilities lists only the next unlock level and is omitted when no abilities remain to unlock."
   },
   "tactics-set": {
     path: "character/tactics/set",
@@ -26050,7 +26051,13 @@ var characterCommands = {
         includeSchema.options
       ]
     ],
-    help: "Read character status, job and skill levels, combat stats, collection counts (enemy kinds defeated and recipes crafted), capacity, bag_expansion and rest estimate. collection is always included; no --include option is needed for it. bag_expansion.next previews the next tier capacity and price, and next.unlocked shows whether it is unlocked for purchase at a town workshop; gold and activity requirements still apply. Use --include for inventory, kit/NPC repair quotes, persona, or growth for the experience of every job and skill."
+    help: "Read character status, job and skill levels, combat stats, collection counts (enemy kinds defeated and recipes crafted), achievement counts, capacity, bag_expansion and rest estimate. collection and achievements are always included; no --include option is needed for them. bag_expansion.next previews the next tier capacity and price, and next.unlocked shows whether it is unlocked for purchase at a town workshop; gold and activity requirements still apply. Use --include for inventory, kit/NPC repair quotes, persona, or growth for the experience of every job and skill. growth.jobs[].next_abilities lists each job\u2019s next unlock level and is omitted when no abilities remain to unlock."
+  },
+  achievements: {
+    path: "character/achievements",
+    schema: getAchievementsSchema,
+    flags: [],
+    help: "List your achievements by category: unlocked ones with the time each was recorded, and the condition and progress of each public one not unlocked yet. Hidden achievements appear only as a count until unlocked."
   },
   create: {
     path: "character/create",
@@ -26802,8 +26809,10 @@ var responseDataKeys = {
     "combat_stats",
     "growth",
     "bag_expansion",
-    "collection"
+    "collection",
+    "achievements"
   ],
+  achievements: ["achievements"],
   create: ["created"],
   profile: ["profile_saved"],
   map: ["map", "position"],

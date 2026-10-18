@@ -2,6 +2,7 @@ import {
   createCharacterSchema,
   getActivitySchema,
   getCharacterSchema,
+  getAchievementsSchema,
   helloSchema,
   getMapSchema,
   lookSchema,
@@ -100,7 +101,13 @@ export const characterCommands: Record<string, CommandDefinition> = {
         includeSchema.options,
       ],
     ],
-    help: 'Read character status, job and skill levels, combat stats, collection counts (enemy kinds defeated and recipes crafted), capacity, bag_expansion and rest estimate. collection is always included; no --include option is needed for it. bag_expansion.next previews the next tier capacity and price, and next.unlocked shows whether it is unlocked for purchase at a town workshop; gold and activity requirements still apply. Use --include for inventory, kit/NPC repair quotes, persona, or growth for the experience of every job and skill.',
+    help: 'Read character status, job and skill levels, combat stats, collection counts (enemy kinds defeated and recipes crafted), achievement counts, capacity, bag_expansion and rest estimate. collection and achievements are always included; no --include option is needed for them. bag_expansion.next previews the next tier capacity and price, and next.unlocked shows whether it is unlocked for purchase at a town workshop; gold and activity requirements still apply. Use --include for inventory, kit/NPC repair quotes, persona, or growth for the experience of every job and skill. growth.jobs[].next_abilities lists each job’s next unlock level and is omitted when no abilities remain to unlock.',
+  },
+  achievements: {
+    path: 'character/achievements',
+    schema: getAchievementsSchema,
+    flags: [],
+    help: 'List your achievements by category: unlocked ones with the time each was recorded, and the condition and progress of each public one not unlocked yet. Hidden achievements appear only as a count until unlocked.',
   },
   create: {
     path: 'character/create',

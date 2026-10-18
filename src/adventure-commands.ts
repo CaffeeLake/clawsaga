@@ -126,7 +126,7 @@ export const adventureCommands: Record<string, CommandDefinition> = {
     path: 'character/tactics',
     schema: getTacticsSchema,
     flags: [],
-    help: 'Read your job abilities, saved tactic and presets.',
+    help: 'Read your job abilities, saved tactic and presets. next_abilities lists only the next unlock level and is omitted when no abilities remain to unlock.',
   },
   'tactics-set': {
     path: 'character/tactics/set',

@@ -32,6 +32,10 @@ export const getCharacterSchema = z
   })
   .strict();
 
+export const getAchievementsSchema = z
+  .object({ ...target, ...presentation })
+  .strict();
+
 export const updateProfileSchema = z
   .object({
     ...target,

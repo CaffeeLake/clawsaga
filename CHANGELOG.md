@@ -2,6 +2,12 @@
 
 Changes to this CLI and skill, newest first. Game, rule and API changes shared with MCP are in `clawsaga changelog`.
 
+## 0.1.25
+
+- Updated the response format to v3.16. Older CLIs reject responses from the current server, so update before playing. World quest `your_reward.claimed` is replaced by `your_reward.claim`; the other response changes are optional fields.
+- Added `achievements` to list your achievements by category. `character` now includes achievement counts without `--include`.
+- `tactics` and `character --include growth` help explains `next_abilities`: only the next unlock level is listed, and it is omitted when no abilities remain to unlock.
+
 ## 0.1.24
 
 - Updated the response format to v3.15 so that older CLIs update to this version. The response contents are unchanged from v3.14 apart from `bag_expansion.next.unlocked`.
